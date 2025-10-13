@@ -178,6 +178,32 @@ nav a:hover {
   color: var(--color-highlight);
 }
 
+.btn-outline-dark {
+  color: var(--color-night);
+  border-color: var(--color-night);
+}
+
+.btn-outline-dark:hover {
+  border-color: var(--color-deep-red);
+  color: var(--color-deep-red);
+}
+
+.btn-instagram {
+  background: linear-gradient(120deg, #f77737, #c13584 55%, #5851db);
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(200, 71, 140, 0.45);
+  border: 0;
+}
+
+.btn-instagram:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(200, 71, 140, 0.5);
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -338,6 +364,72 @@ section {
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.22);
 }
 
+.instagram-section {
+  background: linear-gradient(130deg, rgba(246, 166, 35, 0.85), rgba(242, 111, 85, 0.5)), url('assets/mosaic-texture.svg');
+  background-size: cover;
+  background-position: center;
+  color: var(--color-night);
+}
+
+.instagram-grid {
+  display: grid;
+  gap: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+.instagram-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.instagram-copy h2 {
+  margin: 0;
+}
+
+.instagram-copy p {
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.instagram-handle {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.instagram-preview {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.instagram-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 1.6rem;
+  padding: 1.6rem;
+  border: 3px solid rgba(5, 24, 37, 0.15);
+  box-shadow: 14px 14px 0 rgba(5, 24, 37, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+.instagram-card h3 {
+  margin: 0.4rem 0;
+  font-size: 1.25rem;
+}
+
+.instagram-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(5, 24, 37, 0.85);
+  color: var(--color-cream);
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .agenda-section {
   background: linear-gradient(120deg, rgba(5, 24, 37, 0.82), rgba(27, 111, 78, 0.6)), url('assets/noite-paisagem.svg');
   background-size: cover;
@@ -360,6 +452,9 @@ section {
   position: relative;
   overflow: hidden;
   color: var(--color-night);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
 }
 
 .agenda-card::after {
@@ -373,6 +468,80 @@ section {
 .agenda-card h3 {
   margin-top: 0;
   font-size: 1.4rem;
+}
+
+.agenda-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.agenda-date {
+  width: 86px;
+  min-width: 86px;
+  aspect-ratio: 1/1;
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(27, 111, 78, 0.95), rgba(5, 24, 37, 0.9));
+  color: var(--color-cream);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(5, 24, 37, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+.agenda-day {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.agenda-month {
+  font-size: 0.95rem;
+  letter-spacing: 0.2em;
+  margin-top: 0.2rem;
+}
+
+.agenda-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.agenda-meta {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  color: rgba(5, 24, 37, 0.75);
+}
+
+.agenda-venue {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.agenda-city {
+  font-size: 0.95rem;
+  color: rgba(5, 24, 37, 0.7);
+}
+
+.agenda-description {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  line-height: 1.5;
+  font-size: 0.98rem;
+}
+
+.agenda-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
 }
 
 .tag {
@@ -597,12 +766,78 @@ footer p {
   padding: 1.8rem;
   border: 3px solid var(--color-night);
   box-shadow: 14px 14px 0 rgba(27, 111, 78, 0.22);
-  display: grid;
-  gap: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .schedule-item strong {
   font-size: 1.4rem;
+}
+
+.schedule-head {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  flex-wrap: wrap;
+}
+
+.schedule-date {
+  width: 96px;
+  min-width: 96px;
+  aspect-ratio: 1/1;
+  border-radius: 26px;
+  background: linear-gradient(160deg, rgba(242, 111, 85, 0.95), rgba(246, 166, 35, 0.85));
+  color: var(--color-night);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid rgba(5, 24, 37, 0.2);
+  box-shadow: 0 16px 32px rgba(242, 111, 85, 0.35);
+}
+
+.schedule-day {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.schedule-month {
+  font-size: 1rem;
+  letter-spacing: 0.22em;
+}
+
+.schedule-info {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.schedule-meta {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  color: rgba(5, 24, 37, 0.75);
+}
+
+.schedule-venue {
+  font-weight: 600;
+}
+
+.schedule-city {
+  color: rgba(5, 24, 37, 0.7);
+}
+
+.schedule-description {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 @media (max-width: 768px) {
@@ -630,6 +865,25 @@ footer p {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .agenda-card-header,
+  .schedule-head {
+    flex-direction: row;
+  }
+
+  .agenda-date {
+    width: 72px;
+    min-width: 72px;
+  }
+
+  .schedule-date {
+    width: 84px;
+    min-width: 84px;
+  }
+
+  .instagram-grid {
+    gap: 2rem;
+  }
 }
 
 @media (max-width: 520px) {
@@ -648,6 +902,23 @@ footer p {
   .cart-item {
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .agenda-card-header,
+  .schedule-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .agenda-date,
+  .schedule-date {
+    width: 66px;
+    min-width: 66px;
+    border-radius: 16px;
+  }
+
+  .instagram-card {
+    box-shadow: 10px 10px 0 rgba(5, 24, 37, 0.18);
   }
 }
 

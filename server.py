@@ -33,7 +33,8 @@ def init_db() -> sqlite3.Connection:
         venue TEXT NOT NULL,
         status TEXT DEFAULT 'confirmado',
         description TEXT,
-        tickets_link TEXT
+        tickets_link TEXT,
+        instagram_url TEXT
       );
 
       CREATE TABLE IF NOT EXISTS products (
@@ -73,8 +74,15 @@ def init_db() -> sqlite3.Connection:
       );
       """
     )
+  ensure_column(conn, 'events', 'instagram_url', 'instagram_url TEXT')
   seed_data(conn)
   return conn
+
+
+def ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+  columns = {row['name'] for row in conn.execute(f'PRAGMA table_info({table})')}
+  if column not in columns:
+    conn.execute(f'ALTER TABLE {table} ADD COLUMN {definition}')
 
 
 def seed_data(conn: sqlite3.Connection) -> None:
@@ -82,56 +90,52 @@ def seed_data(conn: sqlite3.Connection) -> None:
     cursor = conn.execute(f'SELECT COUNT(*) as total FROM {table}')
     return cursor.fetchone()['total'] > 0
 
-  if not table_has_rows('events'):
-    events = [
-      (
-        'Divino no Centro Cultural São Paulo',
-        '2024-11-09',
-        'São Paulo · SP',
-        'Centro Cultural São Paulo',
-        'confirmado',
-        'Show completo com repertório tropicalista e convidados surpresa.',
-        'https://bit.ly/divino-ccsp'
-      ),
-      (
-        'Festival Cores do Brasil',
-        '2024-12-14',
-        'Rio de Janeiro · RJ',
-        'Marina da Glória',
-        'confirmado',
-        'Palco principal com projeções e participação da DJ Brisa.',
-        'https://bit.ly/coresdivino'
-      ),
-      (
-        'Virada Cultural',
-        '2025-01-25',
-        'Belo Horizonte · MG',
-        'Praça da Estação',
-        'em negociação',
-        'Apresentação ao ar livre com cortejo performático.',
-        None
-      ),
-      (
-        'Noite Tropical Independente',
-        '2025-02-22',
-        'Curitiba · PR',
-        'Usina 5',
-        'confirmado',
-        'Evento especial com cenário imersivo e intervenções visuais.',
-        'https://bit.ly/noitetropical'
-      ),
-      (
-        'Tour Nordeste',
-        '2025-03-14',
-        'Recife · PE',
-        'Baile Periférico',
-        'em negociação',
-        'Mini turnê com workshops e oficinas de percussão.',
-        None
-      )
-    ]
+  events = [
+    (
+      'BelzeBeer',
+      '2024-10-12',
+      'São Paulo · SP',
+      'BelzeBeer',
+      'confirmado',
+      'Estreia da turnê com repertório dançante e jam session após o show.',
+      None,
+      'https://www.instagram.com/belzebeer/'
+    ),
+    (
+      'La Cancha',
+      '2024-10-24',
+      'São Paulo · SP',
+      'La Cancha',
+      'confirmado',
+      'Noite latina com grooves tropicais, convidado especial e pista até tarde.',
+      None,
+      'https://www.instagram.com/lacanchafc/'
+    ),
+    (
+      'São Jorge Bar de Reza',
+      '2024-10-26',
+      'Santo André · SP',
+      'São Jorge Bar de Reza',
+      'confirmado',
+      'Celebração de sábado com visual psicodélico e coro coletivo nos clássicos.',
+      None,
+      'https://www.instagram.com/saojorgebardereza/'
+    ),
+    (
+      'Evento Privado',
+      '2024-11-21',
+      'Local reservado',
+      'Evento Corporativo',
+      'evento privado',
+      'Apresentação exclusiva para convidados com repertório personalizado.',
+      None,
+      None
+    )
+  ]
+  with conn:
+    conn.execute('DELETE FROM events')
     conn.executemany(
-      'INSERT INTO events (title, date_iso, city, venue, status, description, tickets_link) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO events (title, date_iso, city, venue, status, description, tickets_link, instagram_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       events
     )
 
@@ -197,6 +201,7 @@ def format_event(row: Dict[str, Any]) -> Dict[str, Any]:
   date_label = date_obj.strftime('%d/%m/%Y')
   formatted = dict(row)
   formatted['date_label'] = date_label
+  formatted['instagram_url'] = row.get('instagram_url')
   return formatted
 
 
