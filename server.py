@@ -188,7 +188,7 @@ def seed_data(conn: sqlite3.Connection) -> None:
       ('Instagram', 'https://www.instagram.com/divinomaravilhosobr', 'instagram'),
       ('YouTube', 'https://www.youtube.com/@divinomaravilhoso', 'youtube'),
       ('Spotify', 'https://open.spotify.com/artist/3tKDivino', 'spotify'),
-      ('Contato por e-mail', 'mailto:contato@divinomaravilhoso.com.br', 'email')
+      ('Contato por e-mail', 'mailto:munhoz.vinicius@gmail.com', 'email')
     ]
     conn.executemany(
       'INSERT INTO social_links (label, url, platform) VALUES (?, ?, ?)',

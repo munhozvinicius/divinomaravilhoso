@@ -678,6 +678,32 @@ section {
   gap: 2rem;
 }
 
+.contact-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.18rem;
+  text-decoration-color: rgba(0, 0, 0, 0.6);
+}
+
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #25d366;
+  color: #0b371a;
+  padding: 0.65rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 6px 6px 0 rgba(11, 55, 26, 0.25);
+}
+
+.btn-whatsapp:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0 rgba(11, 55, 26, 0.2);
+}
+
 .contact-card {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 1.2rem;
