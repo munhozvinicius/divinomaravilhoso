@@ -1,0 +1,699 @@
+:root {
+  --color-sand: #f4e0b5;
+  --color-deep-red: #b23427;
+  --color-sun: #f6a623;
+  --color-forest: #1b6f4e;
+  --color-sea: #006f80;
+  --color-night: #1f1a2a;
+  --color-cream: #fff1d6;
+  --color-teal: #157a8b;
+  --color-brown: #663c2b;
+  --color-highlight: #ffe066;
+  font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Fira Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(180deg, #071726 0%, #0f384c 35%, #f4e0b5 100%);
+  color: var(--color-night);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: "Bebas Neue", "League Gothic", "Fira Sans Condensed", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+header {
+  background: linear-gradient(135deg, var(--color-sea), var(--color-forest));
+  color: var(--color-cream);
+  padding: 0.5rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-inner {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.6rem;
+  letter-spacing: 0.1em;
+}
+
+.logo span {
+  display: block;
+  line-height: 1.1;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+nav a {
+  display: inline-block;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+nav a:hover {
+  border-color: var(--color-highlight);
+  color: var(--color-highlight);
+}
+
+.hero {
+  background: linear-gradient(120deg, rgba(5, 20, 34, 0.75), rgba(246, 166, 35, 0.55)), url('assets/hero-panorama.svg');
+  background-size: cover;
+  background-position: center;
+  color: var(--color-cream);
+  padding: 6rem 0 5rem;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, transparent 0 50%, rgba(0, 0, 0, 0.15) 50% 100%);
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+.hero-inner {
+  position: relative;
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 3rem;
+  align-items: center;
+}
+
+.hero-copy h1 {
+  font-size: clamp(3.2rem, 6vw, 5rem);
+  margin: 0;
+  line-height: 0.92;
+  text-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.hero-copy p {
+  font-size: 1.1rem;
+  max-width: 28rem;
+  line-height: 1.5;
+}
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn {
+  border: none;
+  padding: 0.85rem 1.8rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.btn-primary {
+  background: var(--color-highlight);
+  color: var(--color-night);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-cream);
+  border: 2px solid var(--color-cream);
+}
+
+.btn-outline:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-highlight);
+  color: var(--color-highlight);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.tile {
+  padding: 1.6rem;
+  border-radius: 1.2rem;
+  background: rgba(0, 0, 0, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  color: var(--color-cream);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 15px 32px rgba(0, 0, 0, 0.25);
+}
+
+section {
+  padding: clamp(4rem, 8vw, 6rem) 0;
+}
+
+.section-inner {
+  width: min(1100px, 90vw);
+  margin: 0 auto;
+}
+
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-sun);
+  color: var(--color-night);
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  margin-bottom: 1.6rem;
+}
+
+.section-title::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-deep-red);
+}
+
+.about {
+  position: relative;
+  background: linear-gradient(120deg, rgba(244, 224, 181, 0.85), rgba(255, 193, 135, 0.6)),
+    url('assets/patio-panorama.svg');
+  background-size: cover;
+  background-position: center;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+}
+
+.about-card {
+  padding: 1.8rem;
+  border-radius: 1.2rem;
+  border: 3px solid var(--color-night);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 12px 12px 0 rgba(27, 111, 78, 0.35);
+}
+
+.about-card h3 {
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.about-card ul {
+  padding-left: 1.1rem;
+  margin: 0;
+}
+
+.about-card li {
+  margin-bottom: 0.4rem;
+}
+
+.spotify-section {
+  background: linear-gradient(120deg, rgba(5, 24, 37, 0.85), rgba(18, 101, 88, 0.78)), url('assets/hero-panorama.svg');
+  background-size: cover;
+  background-position: 50% 30%;
+  color: var(--color-cream);
+}
+
+.spotify-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  align-items: center;
+}
+
+.spotify-copy {
+  background: rgba(8, 27, 38, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1.4rem;
+  padding: 2rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+}
+
+.spotify-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+}
+
+.btn-spotify {
+  background: #1db954;
+  color: #04151d;
+  box-shadow: 0 14px 30px rgba(29, 185, 84, 0.4);
+}
+
+.btn-spotify:hover {
+  box-shadow: 0 18px 36px rgba(29, 185, 84, 0.5);
+}
+
+.btn-spotify-pre {
+  border-color: rgba(255, 255, 255, 0.7);
+  color: var(--color-cream);
+}
+
+.btn-spotify-pre:hover {
+  color: var(--color-highlight);
+  border-color: var(--color-highlight);
+}
+
+.spotify-icon {
+  display: inline-flex;
+  width: 1.6rem;
+  height: 1.6rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotify-icon svg {
+  width: 100%;
+  height: 100%;
+  color: currentColor;
+  fill: currentColor;
+}
+
+.spotify-note {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.spotify-embed iframe {
+  width: 100%;
+  height: 360px;
+  border: none;
+  border-radius: 1.2rem;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.22);
+}
+
+.agenda-section {
+  background: linear-gradient(120deg, rgba(5, 24, 37, 0.82), rgba(27, 111, 78, 0.6)), url('assets/noite-paisagem.svg');
+  background-size: cover;
+  background-position: center;
+  color: var(--color-cream);
+}
+
+.agenda-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.agenda-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid var(--color-deep-red);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 12px 12px 0 rgba(27, 111, 78, 0.25);
+  position: relative;
+  overflow: hidden;
+  color: var(--color-night);
+}
+
+.agenda-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 65%, rgba(242, 111, 85, 0.25));
+  pointer-events: none;
+}
+
+.agenda-card h3 {
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  background: var(--color-deep-red);
+  color: var(--color-cream);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.store-section {
+  background: linear-gradient(130deg, rgba(244, 224, 181, 0.85), rgba(246, 166, 35, 0.4)),
+    url('assets/patio-panorama.svg');
+  background-size: cover;
+  background-position: center;
+}
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1.4rem;
+  border: 3px solid var(--color-night);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  box-shadow: 12px 12px 0 rgba(102, 60, 43, 0.25);
+  position: relative;
+}
+
+.product-card h3 {
+  margin: 0.2rem 0 0;
+}
+
+.price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-deep-red);
+}
+
+.badge {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: var(--color-highlight);
+  color: var(--color-night);
+  font-size: 0.75rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cart-panel {
+  margin-top: 2.5rem;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 1.4rem;
+  border: 3px solid var(--color-night);
+  padding: 2rem;
+  box-shadow: 16px 16px 0 rgba(21, 122, 139, 0.22);
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cart-items {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(244, 224, 181, 0.6);
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+}
+
+.cart-total {
+  margin-top: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.checkout-form {
+  margin-top: 1.6rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.checkout-form label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checkout-form input,
+.checkout-form textarea,
+.checkout-form select {
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.checkout-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.contact-section {
+  background: linear-gradient(120deg, rgba(27, 111, 78, 0.12), rgba(0, 111, 128, 0.18));
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+}
+
+.contact-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 1.2rem;
+  border: 3px solid var(--color-sea);
+  padding: 1.8rem;
+  box-shadow: 12px 12px 0 rgba(0, 111, 128, 0.2);
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.social-links a {
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 2px solid var(--color-night);
+  background: var(--color-highlight);
+  color: var(--color-night);
+  font-weight: 600;
+}
+
+footer {
+  background: var(--color-night);
+  color: var(--color-cream);
+  padding: 2rem 0;
+  text-align: center;
+}
+
+footer p {
+  margin: 0.4rem 0;
+}
+
+.banner {
+  background: repeating-linear-gradient(
+      45deg,
+      var(--color-deep-red),
+      var(--color-deep-red) 12px,
+      var(--color-sun) 12px,
+      var(--color-sun) 24px,
+      var(--color-forest) 24px,
+      var(--color-forest) 36px,
+      var(--color-sea) 36px,
+      var(--color-sea) 48px
+    );
+  height: 18px;
+}
+
+.schedule-page {
+  background: linear-gradient(180deg, rgba(5, 20, 34, 0.9) 0%, rgba(24, 111, 78, 0.6) 60%, rgba(246, 166, 35, 0.55) 100%),
+    url('assets/noite-paisagem.svg');
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.schedule-page header {
+  position: relative;
+}
+
+.schedule-hero {
+  background: linear-gradient(120deg, rgba(5, 24, 37, 0.85), rgba(21, 122, 139, 0.75)), url('assets/noite-paisagem.svg');
+  background-size: cover;
+  background-position: center;
+  color: var(--color-cream);
+  padding: 5rem 0 4rem;
+  box-shadow: inset 0 -40px 80px rgba(0, 0, 0, 0.35);
+}
+
+.schedule-hero h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin: 0;
+}
+
+.schedule-list {
+  width: min(960px, 90vw);
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+  display: grid;
+  gap: 1.8rem;
+}
+
+.schedule-item {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1.2rem;
+  padding: 1.8rem;
+  border: 3px solid var(--color-night);
+  box-shadow: 14px 14px 0 rgba(27, 111, 78, 0.22);
+  display: grid;
+  gap: 0.6rem;
+}
+
+.schedule-item strong {
+  font-size: 1.4rem;
+}
+
+@media (max-width: 768px) {
+  nav ul {
+    display: none;
+  }
+
+  .hero {
+    padding: 5rem 0 4rem;
+  }
+
+  .hero-inner {
+    gap: 2rem;
+  }
+
+  .header-inner {
+    justify-content: center;
+  }
+
+  .spotify-copy {
+    padding: 1.6rem;
+  }
+
+  .spotify-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+  }
+
+  .spotify-embed iframe {
+    height: 280px;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.product-illustration {
+  height: 140px;
+  border-radius: 1rem;
+  background: repeating-linear-gradient(
+      -45deg,
+      rgba(242, 111, 85, 0.9) 0,
+      rgba(242, 111, 85, 0.9) 14px,
+      rgba(21, 122, 139, 0.85) 14px,
+      rgba(21, 122, 139, 0.85) 28px,
+      rgba(255, 224, 102, 0.85) 28px,
+      rgba(255, 224, 102, 0.85) 42px
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-cream);
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.product-card p {
+  margin: 0;
+  flex: 1;
+}
+
+.product-card .btn {
+  align-self: flex-start;
+}
+
+.remove-item {
+  background: none;
+  border: none;
+  color: var(--color-deep-red);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.empty-cart {
+  text-align: center;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.6);
+}
