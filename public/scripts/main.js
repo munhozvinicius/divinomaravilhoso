@@ -233,7 +233,7 @@ async function handleCheckout(event) {
   const feedback = document.getElementById('checkout-feedback');
   if (cart.items.size === 0) {
     feedback.textContent = 'Adicione itens ao carrinho antes de enviar o pedido.';
-    feedback.style.color = '#b23427';
+    feedback.style.color = '#ff4d6d';
     return;
   }
 
@@ -262,13 +262,13 @@ async function handleCheckout(event) {
     if (!response.ok) throw new Error('Falha ao registrar pedido');
     const data = await response.json();
     feedback.textContent = `Pedido recebido! Código: ${data.order_id}`;
-    feedback.style.color = '#1b6f4e';
+    feedback.style.color = '#1ed760';
     form.reset();
     cart.clear();
     renderCart();
   } catch (error) {
     feedback.textContent = 'Não foi possível registrar o pedido agora. Tente novamente mais tarde.';
-    feedback.style.color = '#b23427';
+    feedback.style.color = '#ff4d6d';
     console.error(error);
   }
 }
@@ -285,11 +285,11 @@ async function handleNewsletter(event) {
     });
     if (!response.ok) throw new Error('Falha no cadastro');
     feedback.textContent = 'E-mail cadastrado. Obrigado por fazer parte!';
-    feedback.style.color = '#1b6f4e';
+    feedback.style.color = '#1ed760';
     input.value = '';
   } catch (error) {
     feedback.textContent = 'Não foi possível cadastrar agora.';
-    feedback.style.color = '#b23427';
+    feedback.style.color = '#ff4d6d';
   }
 }
 
