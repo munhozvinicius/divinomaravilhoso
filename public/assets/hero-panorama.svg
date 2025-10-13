@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#007a87" />
+      <stop offset="45%" stop-color="#009b78" />
+      <stop offset="100%" stop-color="#ffb152" />
+    </linearGradient>
+    <pattern id="mosaic" width="120" height="120" patternUnits="userSpaceOnUse" patternTransform="skewX(-12)">
+      <rect width="120" height="120" fill="#ef5a2a" />
+      <path d="M0 60h120M60 0v120" stroke="#ffe4c9" stroke-width="11" />
+      <path d="M0 0l120 120M120 0L0 120" stroke="#ffe4c9" stroke-width="8" />
+    </pattern>
+    <radialGradient id="sun" cx="0.82" cy="0.12" r="0.28">
+      <stop offset="0%" stop-color="#ffe066" />
+      <stop offset="100%" stop-color="#f16b2f" />
+    </radialGradient>
+    <linearGradient id="shadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00000055" />
+      <stop offset="100%" stop-color="#00000000" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bgGradient)" />
+  <g opacity="0.9">
+    <path d="M0 660h1600v240H0z" fill="url(#mosaic)" />
+    <path d="M0 660h1600v180H0z" fill="#1a1b30" opacity="0.4" />
+  </g>
+  <g transform="translate(0,90)" opacity="0.24">
+    <path d="M0 0h1600v420H0z" fill="#0f2a3d" />
+    <path d="M0 380h1600v60H0z" fill="#ef5a2a" opacity="0.3" />
+  </g>
+  <circle cx="1310" cy="170" r="130" fill="url(#sun)" />
+  <g fill="#f8d4aa" opacity="0.65">
+    <path d="M320 580c40-120 220-160 260-40s-40 200-180 200c-90 0-180-80-140-160z" />
+    <path d="M890 520c50-130 250-140 280-10s-40 210-210 210c-95 0-150-100-70-200z" />
+  </g>
+  <g fill="#fdf7ec" opacity="0.4">
+    <path d="M120 520l60-120h80l60 120h-60l-20-40h-40l-20 40z" />
+    <path d="M590 510l50-140h110l50 140h-55l-13-42h-78l-13 42z" />
+  </g>
+  <g opacity="0.75">
+    <path d="M1090 620c0-60 45-96 110-96s110 36 110 96v140h-220z" fill="#1f3c5b" />
+    <path d="M1230 540c10-30 36-40 64-40 40 0 70 28 70 74v36h-78l-14-30h-42z" fill="#efb365" />
+    <circle cx="1190" cy="524" r="48" fill="#ffe4c9" />
+  </g>
+  <g opacity="0.55">
+    <path d="M180 660h140l20 240H160z" fill="#18273d" />
+    <path d="M320 660h120l12 120H308z" fill="#f16b2f" />
+    <rect x="364" y="660" width="40" height="120" fill="#ffe4c9" />
+  </g>
+  <rect width="1600" height="900" fill="url(#shadow)" />
+</svg>
