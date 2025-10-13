@@ -31,6 +31,7 @@
             <li><a href="#loja">Loja</a></li>
             <li><a href="#contato">Contato</a></li>
             <li><a href="#instagram">Instagram</a></li>
+            <li><a href="https://www.instagram.com/divinomaravilhosobr" target="_blank">Instagram</a></li>
           </ul>
         </nav>
       </div>
@@ -57,6 +58,7 @@
                   Rodrigo Gaudio – Guitarra e vocais<br />
                   Barone – Baixo<br />
                   Lucas “Xuxa” Carareto – Bateria
+                  Vinícius Munhoz · Rodrigo Guadio · Lucas "Xuxa" Carreteiro · João "Zaze" · Marcelo Zanetti
                 </p>
               </div>
               <div class="tile">
@@ -155,6 +157,13 @@
             <iframe
               src="https://open.spotify.com/embed/playlist/4NCPXGyXVz6UM3QVXjFQn3?utm_source=generator"
               title="Playlist Divino Maravilhoso no Spotify"
+            <a class="btn btn-primary" href="https://open.spotify.com/playlist/37i9dQZF1DX3WY6t08mAQd" target="_blank"
+              >Ouvir no Spotify</a
+            >
+          </div>
+          <div class="spotify-embed">
+            <iframe
+              src="https://open.spotify.com/embed/playlist/37i9dQZF1DX3WY6t08mAQd?utm_source=generator"
               allowfullscreen=""
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             ></iframe>
@@ -233,6 +242,49 @@
             <p>
               Acompanhe nossas redes e garanta acesso antecipado aos lançamentos exclusivos quando a loja abrir.
             </p>
+            Bones, camisetas, adesivos e bandeiras para você carregar o Divino Maravilhoso por onde for. Selecionamos materiais premium e produção independente.
+          </p>
+          <div class="store-grid" id="store-grid"></div>
+          <div class="cart-panel">
+            <div class="cart-header">
+              <h3>Carrinho</h3>
+              <span id="cart-count">0 itens</span>
+            </div>
+            <div class="cart-items" id="cart-items"></div>
+            <div class="cart-total">
+              <span>Total</span>
+              <span id="cart-total">R$ 0,00</span>
+            </div>
+            <form class="checkout-form" id="checkout-form">
+              <div>
+                <label for="cliente-nome">Nome completo</label>
+                <input type="text" id="cliente-nome" name="nome" required />
+              </div>
+              <div>
+                <label for="cliente-email">E-mail</label>
+                <input type="email" id="cliente-email" name="email" required />
+              </div>
+              <div>
+                <label for="cliente-telefone">Telefone</label>
+                <input type="tel" id="cliente-telefone" name="telefone" required />
+              </div>
+              <div>
+                <label for="cliente-endereco">Endereço completo</label>
+                <textarea id="cliente-endereco" name="endereco" required></textarea>
+              </div>
+              <div>
+                <label for="cliente-pagamento">Forma de pagamento preferida</label>
+                <select id="cliente-pagamento" name="pagamento" required>
+                  <option value="">Selecione</option>
+                  <option value="pix">PIX</option>
+                  <option value="credito">Cartão de crédito</option>
+                  <option value="debito">Cartão de débito</option>
+                  <option value="boleto">Boleto</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" type="submit">Enviar pedido</button>
+              <p id="checkout-feedback" style="margin: 0"></p>
+            </form>
           </div>
         </div>
       </section>
@@ -256,6 +308,8 @@
                 <span aria-hidden="true">💬</span>
                 <span>Chamar no WhatsApp</span>
               </a>
+              <strong>contato@divinomaravilhoso.com.br</strong><br />
+              +55 (11) 99999-0000
             </p>
             <p>
               Envie detalhes do evento, local, data e expectativas. Nossa equipe responde em até 24h com proposta completa.
@@ -282,6 +336,8 @@
 
     <footer>
       <p>Agremiação Musical Divino Maravilhoso 2025 - Rio Preto Brasil</p>
+      <p>Divino Maravilhoso - Agremiação Musical</p>
+      <p>Site oficial inspirado na estética tropical urbana brasileira.</p>
     </footer>
 
     <script src="/scripts/main.js" type="module"></script>
