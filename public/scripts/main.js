@@ -18,16 +18,54 @@ function formatCurrency(value) {
   });
 }
 
+function getDateParts(dateIso) {
+  const date = new Date(`${dateIso}T00:00:00`);
+  const day = date.toLocaleDateString('pt-BR', { day: '2-digit', timeZone: 'UTC' });
+  const monthRaw = date.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' });
+  const weekdayRaw = date.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
+  const month = monthRaw.replace('.', '').toUpperCase();
+  const weekday = weekdayRaw.charAt(0).toUpperCase() + weekdayRaw.slice(1);
+  return { day, month, weekday };
+}
+
 function createAgendaCard(evento) {
   const article = document.createElement('article');
   article.className = 'agenda-card';
+  const { day, month, weekday } = getDateParts(evento.date_iso);
+  const instagramButton =
+    evento.instagram_url
+      ? `
+        <a class="btn btn-instagram" target="_blank" rel="noopener" href="${evento.instagram_url}">
+          <span class="btn-icon" aria-hidden="true">📸</span>
+          <span>Instagram do local</span>
+        </a>
+      `
+      : '';
+  const ticketsButton =
+    evento.tickets_link
+      ? `
+        <a class="btn btn-outline btn-outline-dark" target="_blank" rel="noopener" href="${evento.tickets_link}">
+          Ingressos
+        </a>
+      `
+      : '';
+  const actions = [instagramButton, ticketsButton].filter(Boolean).join('');
   article.innerHTML = `
-    <span class="tag">${evento.status || 'confirmado'}</span>
-    <h3>${evento.title}</h3>
-    <p><strong>${evento.date_label}</strong></p>
-    <p>${evento.venue} · ${evento.city}</p>
-    ${evento.description ? `<p>${evento.description}</p>` : ''}
-    ${evento.tickets_link ? `<a class="btn btn-outline" target="_blank" href="${evento.tickets_link}">Ingressos</a>` : ''}
+    <div class="agenda-card-header">
+      <div class="agenda-date">
+        <span class="agenda-day">${day}</span>
+        <span class="agenda-month">${month}</span>
+      </div>
+      <div class="agenda-info">
+        <span class="tag">${evento.status || 'confirmado'}</span>
+        <h3>${evento.title}</h3>
+        <p class="agenda-meta">${weekday} · ${evento.date_label}</p>
+        <p class="agenda-venue">${evento.venue}</p>
+        <p class="agenda-city">${evento.city}</p>
+      </div>
+    </div>
+    ${evento.description ? `<p class="agenda-description">${evento.description}</p>` : ''}
+    ${actions ? `<div class="agenda-actions">${actions}</div>` : ''}
   `;
   return article;
 }
