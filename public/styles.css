@@ -562,40 +562,6 @@ section {
   background-position: center;
 }
 
-.store-coming-soon {
-  margin-top: 2rem;
-  background: rgba(255, 255, 255, 0.94);
-  border: 3px dashed var(--color-night);
-  border-radius: 1.6rem;
-  padding: 2.2rem;
-  max-width: 480px;
-  box-shadow: 14px 14px 0 rgba(102, 60, 43, 0.2);
-}
-
-.store-coming-soon h3 {
-  margin: 0.6rem 0 0.8rem;
-  font-size: 1.9rem;
-}
-
-.store-coming-soon p {
-  margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.6;
-}
-
-.store-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--color-night);
-  color: var(--color-cream);
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-}
-
 .store-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
