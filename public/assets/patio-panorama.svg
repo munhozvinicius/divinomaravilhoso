@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c7ca6" />
+      <stop offset="60%" stop-color="#1a9370" />
+      <stop offset="100%" stop-color="#f8b755" />
+    </linearGradient>
+    <pattern id="tiles" width="80" height="80" patternUnits="userSpaceOnUse" patternTransform="rotate(3)">
+      <rect width="80" height="80" fill="#ef5a2a" />
+      <path d="M0 40h80M40 0v80" stroke="#ffe9d0" stroke-width="9" />
+    </pattern>
+    <pattern id="floor" width="140" height="140" patternUnits="userSpaceOnUse" patternTransform="skewX(-8)">
+      <rect width="140" height="140" fill="#10121d" />
+      <path d="M0 0l140 140M140 0L0 140" stroke="#ffe9d0" stroke-width="12" />
+    </pattern>
+    <linearGradient id="cactus" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1d9d63" />
+      <stop offset="100%" stop-color="#0c7044" />
+    </linearGradient>
+    <linearGradient id="shadow2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00000055" />
+      <stop offset="100%" stop-color="#00000000" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)" />
+  <g opacity="0.9">
+    <path d="M0 560h1600v340H0z" fill="url(#floor)" />
+  </g>
+  <g opacity="0.9">
+    <path d="M0 420h1600v140H0z" fill="url(#tiles)" />
+  </g>
+  <g opacity="0.8">
+    <path d="M1400 360l120-80v200h-160z" fill="#f6c764" />
+    <path d="M1220 380l100-120 140 120-120 140z" fill="#ef5a2a" />
+  </g>
+  <g fill="url(#cactus)" opacity="0.9">
+    <path d="M300 260c0-42 20-70 54-70s54 28 54 70v320h-40V300c0-16-6-26-14-26s-14 10-14 26v280h-40z" />
+    <path d="M430 340c0-30 18-50 42-50s42 20 42 50v240h-36v-210c0-12-6-20-14-20s-14 8-14 20v210h-20z" />
+  </g>
+  <g opacity="0.8">
+    <path d="M900 340c0-80 56-140 120-140s120 60 120 140-56 142-120 142-120-62-120-142z" fill="#fbd8a4" />
+    <path d="M960 240h120v320H960z" fill="#f0783d" />
+    <rect x="960" y="520" width="120" height="40" fill="#1a1b2a" />
+  </g>
+  <g fill="#ef5a2a" opacity="0.85">
+    <rect x="620" y="440" width="80" height="200" rx="24" />
+    <rect x="710" y="520" width="22" height="120" />
+    <rect x="588" y="520" width="22" height="120" />
+  </g>
+  <g fill="#ffe9d0" opacity="0.85">
+    <circle cx="220" cy="560" r="80" />
+    <rect x="160" y="520" width="120" height="180" rx="36" />
+  </g>
+  <rect width="1600" height="900" fill="url(#shadow2)" />
+</svg>
