@@ -109,15 +109,26 @@ async function renderTopTracks() {
     list.appendChild(empty);
     return;
   }
+
+  let hasVotes = false;
   tracks.forEach((track, index) => {
+    const votos = Number(track.votos) || 0;
+    if (votos > 0) hasVotes = true;
     const item = document.createElement('li');
     item.innerHTML = `
       <span class="track-rank">#${index + 1}</span>
       <span class="track-name">${track.track_name}</span>
-      <span class="track-votes">${track.votos} voto${track.votos === 1 ? '' : 's'}</span>
+      <span class="track-votes">${votos} voto${votos === 1 ? '' : 's'}</span>
     `;
     list.appendChild(item);
   });
+
+  const note = document.querySelector('.top-note');
+  if (note) {
+    note.textContent = hasVotes
+      ? 'Atualizado em tempo real com os votos da comunidade Divino.'
+      : 'Vote agora para inaugurar o Top 10 neon da turnê.';
+  }
 }
 
 function formatRelative(dateIso) {
@@ -173,6 +184,19 @@ async function postJSON(path, payload) {
   return response.json();
 }
 
+async function populateTrackChoices() {
+  const datalist = document.getElementById('track-options');
+  if (!datalist) return;
+  const tracks = await fetchJSON('/api/setlist/tracks');
+  if (!Array.isArray(tracks) || tracks.length === 0) return;
+  datalist.innerHTML = '';
+  tracks.forEach((track) => {
+    const option = document.createElement('option');
+    option.value = track.track_name;
+    datalist.appendChild(option);
+  });
+}
+
 function handleSetlistVote() {
   const form = document.getElementById('setlist-form');
   const feedback = document.getElementById('vote-feedback');
@@ -182,13 +206,14 @@ function handleSetlistVote() {
     feedback.textContent = '';
     const data = Object.fromEntries(new FormData(form));
     try {
-      await postJSON('/api/setlist/vote', data);
+      const result = await postJSON('/api/setlist/vote', data);
       form.reset();
-      feedback.textContent = 'Voto registrado! Obrigado por iluminar o set.';
+      const trackName = result?.track || data.track_name;
+      feedback.textContent = `Voto registrado em ${trackName}! Obrigado por iluminar o set.`;
       feedback.classList.remove('error');
       await renderTopTracks();
     } catch (error) {
-      feedback.textContent = 'Não foi possível registrar o voto. Tente novamente.';
+      feedback.textContent = error.message || 'Não foi possível registrar o voto. Tente novamente.';
       feedback.classList.add('error');
     }
   });
@@ -241,3 +266,4 @@ renderComments();
 handleSetlistVote();
 handleCommentForm();
 handleNewsletter();
+populateTrackChoices();

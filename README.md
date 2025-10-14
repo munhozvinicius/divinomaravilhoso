@@ -30,7 +30,7 @@ Defina `DATABASE_URL` caso queira apontar para outra instância.
 Na inicialização o servidor garante as tabelas:
 
 - `events`, `products`, `orders`, `newsletter_subscribers`, `social_links`
-- `setlist_votes` e `setlist_comments` para votação e mural de sugestões
+- `setlist_tracks`, `setlist_votes` e `setlist_comments` para votação e mural de sugestões
 
 Os eventos são semeados com as datas fornecidas, preservando Instagram dos bares e status de cada show.
 
@@ -46,7 +46,8 @@ O servidor sobe em `http://localhost:8000`, servindo o front-end (pasta `public/
 
 - `GET /api/events` — agenda completa com links de Instagram
 - `GET /api/events/:id/story-card.png` — gera arte em PNG estilo lambe-lambe para stories
-- `GET /api/setlist/top` — Top 10 músicas mais votadas
+- `GET /api/setlist/tracks` — catálogo oficial de faixas liberadas para voto
+- `GET /api/setlist/top` — Top 10 músicas mais votadas (combina votos com catálogo oficial)
 - `GET /api/setlist/comments` — últimas sugestões neon
 - `POST /api/setlist/vote` — registra voto na música favorita
 - `POST /api/setlist/comment` — envia sugestão de faixa/mashup

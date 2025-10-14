@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import unicodedata
 from datetime import date, datetime
 from http import HTTPStatus
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -27,6 +28,71 @@ DB_POOL = ConnectionPool(
   max_size=6,
   kwargs={'autocommit': True, 'row_factory': dict_row}
 )
+
+
+SETLIST_TRACKS = [
+  'A LUZ DE TIETA',
+  'ALMA SEBOSA / FLUTUA',
+  'BOGOTÁ',
+  'BOM SENSO',
+  'CACHIMBO DA PAZ',
+  'CAETANO VELOSO',
+  'CIRANDA DE MALUCO',
+  'CONTEXTO',
+  'CRUA',
+  'CUBA',
+  'DEIXA EU DIZER / DESABAFO',
+  'DESCOBRIDOR DOS 7 MARES',
+  'DIG DIG DIG / DUAS CIDADES',
+  'ELA PARTIU',
+  'ENGENHO DE DENTRO',
+  'FORA DA LEI',
+  'FUNK ATÉ O CAROÇO',
+  'GUINÉ BISSAU',
+  'KILARIO',
+  'LILÁS',
+  'LUCRO',
+  'MANGUETOWN',
+  'MANUEL',
+  'MAR DE GENTE',
+  'ME DEIXA',
+  'NÃO EXISTE AMOR EM SP',
+  'NEM VEM QUE NÃO TEM',
+  'O QUE SOBROU DO CÉU',
+  'ODARA',
+  'PARA LENNON E MCCARTNEY',
+  'PIRANHA',
+  'PRAIEIRA / SOSSEGO',
+  'QUAL É',
+  'QUANDO A MARÉ ENCHER',
+  'RETRATO PRA IAIÁ',
+  'SAMBA MAKOSSA',
+  'SUBIRUSDOISTIOZIN',
+  'SULAMERICANO',
+  'VAI VENDO',
+  'VOCÊ',
+  'A FLOR',
+  'AQUELE ABRAÇO',
+  'ENVOLVIDÃO',
+  'FALADOR PASSA MAL',
+  'JORGE DA CAPADÓCIA',
+  'JORGE MARAVILHA',
+  'KRIOLA',
+  'NA FRENTE DO RETO',
+  'O TELEFONE TOCOU NOVAMENTE',
+  'OBA, LÁ VEM ELA',
+  'SALVE SIMPATIA',
+  'SEGURA A NEGA',
+  'VARIAS QUEIXAS'
+]
+
+
+def slugify(value: str) -> str:
+  normalized = unicodedata.normalize('NFKD', value or '')
+  without_accents = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+  cleaned = ''.join(ch if ch.isalnum() else '-' for ch in without_accents.lower())
+  collapsed = '-'.join(filter(None, cleaned.split('-')))
+  return collapsed or 'track'
 
 
 def init_db() -> None:
@@ -92,6 +158,17 @@ def init_db() -> None:
           label TEXT NOT NULL,
           url TEXT NOT NULL,
           platform TEXT
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS setlist_tracks (
+          id SERIAL PRIMARY KEY,
+          track_name TEXT UNIQUE NOT NULL,
+          slug TEXT UNIQUE NOT NULL,
+          position INTEGER,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
         '''
       )
@@ -235,6 +312,15 @@ def seed_data() -> None:
           links
         )
 
+      cur.execute('DELETE FROM setlist_tracks;')
+      track_rows = []
+      for position, track in enumerate(SETLIST_TRACKS, start=1):
+        track_rows.append((track, slugify(track), position))
+      cur.executemany(
+        'INSERT INTO setlist_tracks (track_name, slug, position) VALUES (%s, %s, %s);',
+        track_rows,
+      )
+
 
 def format_event(row: Dict[str, Any]) -> Dict[str, Any]:
   raw_date = row['date_iso']
@@ -282,15 +368,30 @@ def get_social_links() -> List[Dict[str, Any]]:
   return rows
 
 
+def get_setlist_tracks() -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        'SELECT track_name, slug, position FROM setlist_tracks ORDER BY position ASC NULLS LAST, track_name ASC;'
+      )
+      rows = cur.fetchall()
+  return rows
+
+
 def get_top_tracks() -> List[Dict[str, Any]]:
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute(
         '''
-        SELECT track_name, COUNT(*) AS votos, MAX(created_at) AS last_vote
-        FROM setlist_votes
-        GROUP BY track_name
-        ORDER BY votos DESC, last_vote DESC
+        SELECT
+          t.track_name,
+          COALESCE(COUNT(v.id), 0) AS votos,
+          MAX(v.created_at) AS last_vote,
+          MIN(t.position) AS pos
+        FROM setlist_tracks t
+        LEFT JOIN setlist_votes v ON v.track_name = t.track_name
+        GROUP BY t.track_name
+        ORDER BY votos DESC, last_vote DESC NULLS LAST, pos ASC
         LIMIT 10;
         '''
       )
@@ -343,13 +444,36 @@ def calculate_order_total(items: Iterable[Dict[str, Any]]) -> Tuple[int, List[Di
   return total_cents, validated_items
 
 
-def insert_vote(track_name: str, voter_name: str | None, voter_contact: str | None) -> None:
+def insert_vote(track_name: str, voter_name: str | None, voter_contact: str | None) -> str:
+  cleaned_name = (track_name or '').strip()
+  if not cleaned_name:
+    raise ValueError('Informe a música que quer ouvir')
+
+  lookup_slug = slugify(cleaned_name)
+  lowered = cleaned_name.lower()
+
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute(
-        'INSERT INTO setlist_votes (track_name, voter_name, voter_contact) VALUES (%s, %s, %s);',
-        (track_name.strip(), voter_name, voter_contact)
+        '''
+        SELECT track_name
+        FROM setlist_tracks
+        WHERE slug = %s OR LOWER(track_name) = %s
+        LIMIT 1;
+        ''',
+        (lookup_slug, lowered),
       )
+      row = cur.fetchone()
+      if not row:
+        raise ValueError('Essa faixa ainda não faz parte da setlist oficial')
+
+      canonical_name = row['track_name']
+      cur.execute(
+        'INSERT INTO setlist_votes (track_name, voter_name, voter_contact) VALUES (%s, %s, %s);',
+        (canonical_name, voter_name, voter_contact),
+      )
+
+  return canonical_name
 
 
 def insert_comment(contributor_name: str | None, idea: str) -> None:
@@ -484,6 +608,12 @@ class DivinoHandler(SimpleHTTPRequestHandler):
       self.wfile.write(json.dumps(top_tracks).encode('utf-8'))
       return
 
+    if parsed.path == '/api/setlist/tracks':
+      tracks = get_setlist_tracks()
+      self._set_json_headers()
+      self.wfile.write(json.dumps(tracks).encode('utf-8'))
+      return
+
     if parsed.path == '/api/setlist/comments':
       query = parse_qs(parsed.query)
       limit = int(query.get('limit', ['20'])[0])
@@ -590,17 +720,17 @@ class DivinoHandler(SimpleHTTPRequestHandler):
       return
 
     track_name = (payload.get('track_name') or '').strip()
-    if not track_name:
-      self.send_error(HTTPStatus.BAD_REQUEST, 'Escolha uma música')
-      return
-
     voter_name = (payload.get('voter_name') or '').strip() or None
     voter_contact = (payload.get('voter_contact') or '').strip() or None
 
-    insert_vote(track_name, voter_name, voter_contact)
+    try:
+      canonical = insert_vote(track_name, voter_name, voter_contact)
+    except ValueError as exc:
+      self.send_error(HTTPStatus.BAD_REQUEST, str(exc))
+      return
 
     self._set_json_headers(HTTPStatus.CREATED)
-    self.wfile.write(json.dumps({'status': 'ok'}).encode('utf-8'))
+    self.wfile.write(json.dumps({'status': 'ok', 'track': canonical}).encode('utf-8'))
 
   def handle_comment(self) -> None:
     length = int(self.headers.get('Content-Length', '0'))

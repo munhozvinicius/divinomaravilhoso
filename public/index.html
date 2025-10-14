@@ -160,7 +160,14 @@
               </label>
               <label class="vote-field">
                 Música que não pode faltar
-                <input type="text" name="track_name" placeholder="Gal Costa - Divino Maravilhoso" required />
+                <input
+                  type="text"
+                  name="track_name"
+                  placeholder="Gal Costa - Divino Maravilhoso"
+                  list="track-options"
+                  required
+                />
+                <datalist id="track-options"></datalist>
               </label>
               <button type="submit" class="btn btn-primary">Registrar voto em neon</button>
               <p class="form-feedback" id="vote-feedback" role="status" aria-live="polite"></p>
