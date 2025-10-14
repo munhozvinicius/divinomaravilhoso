@@ -11,23 +11,42 @@ from socketserver import ThreadingMixIn
 from typing import Any, Dict, Iterable, List, Tuple
 from urllib.parse import parse_qs, urlparse
 
-from PIL import Image, ImageDraw, ImageFont
-from psycopg.rows import dict_row
-from psycopg_pool import ConnectionPool
+try:
+  from PIL import Image, ImageDraw, ImageFont  # type: ignore
+  HAS_PIL = True
+except Exception:  # ImportError or similar
+  Image = ImageDraw = ImageFont = None  # type: ignore
+  HAS_PIL = False
+
+try:
+  from psycopg.rows import dict_row  # type: ignore
+  from psycopg_pool import ConnectionPool  # type: ignore
+  HAS_PG = True
+except Exception:
+  dict_row = None  # type: ignore
+  ConnectionPool = None  # type: ignore
+  HAS_PG = False
+  ConnectionPool = None  # type: ignore
+  HAS_PG = False
 
 BASE_DIR = Path(__file__).resolve().parent
 PUBLIC_DIR = BASE_DIR / 'public'
-DATABASE_URL = os.getenv(
-  'DATABASE_URL',
-  'postgresql://neondb_owner:npg_EunfT2mh0Sci@ep-calm-sky-aczofamt-pooler.sa-east-1.aws.neon.tech/Divino%20?sslmode=require&channel_binding=require'
-)
+DATABASE_URL = os.getenv('DATABASE_URL', '')
 
-DB_POOL = ConnectionPool(
-  conninfo=DATABASE_URL,
-  min_size=1,
-  max_size=6,
-  kwargs={'autocommit': True, 'row_factory': dict_row}
-)
+# Only create a DB pool when the psycopg_pool package is available and a URL is set.
+if HAS_PG and DATABASE_URL:
+  try:
+    DB_POOL = ConnectionPool(
+      conninfo=DATABASE_URL,
+      min_size=1,
+      max_size=6,
+      kwargs={'autocommit': True, 'row_factory': dict_row}
+    )
+  except Exception as exc:  # pragma: no cover - runtime-dependent
+    print('⚠️  Não foi possível criar DB_POOL:', exc)
+    DB_POOL = None
+else:
+  DB_POOL = None
 
 
 SETLIST_TRACKS = [
@@ -96,6 +115,10 @@ def slugify(value: str) -> str:
 
 
 def init_db() -> None:
+  if not DB_POOL:
+    print('⚠️  Banco de dados não configurado. Pulando inicialização das tabelas.')
+    return
+
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute(
@@ -240,6 +263,10 @@ def seed_data() -> None:
     )
   ]
 
+  if not DB_POOL:
+    print('⚠️  Banco de dados não configurado. Pulando seed de dados.')
+    return
+
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute('DELETE FROM events;')
@@ -345,6 +372,8 @@ def format_product(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_events() -> List[Dict[str, Any]]:
+  if not DB_POOL:
+    return []
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute('SELECT * FROM events ORDER BY date_iso ASC;')
@@ -353,6 +382,8 @@ def get_events() -> List[Dict[str, Any]]:
 
 
 def get_products() -> List[Dict[str, Any]]:
+  if not DB_POOL:
+    return []
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute('SELECT * FROM products ORDER BY is_new DESC, name ASC;')
@@ -361,6 +392,8 @@ def get_products() -> List[Dict[str, Any]]:
 
 
 def get_social_links() -> List[Dict[str, Any]]:
+  if not DB_POOL:
+    return []
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute('SELECT label, url, platform FROM social_links ORDER BY id ASC;')
@@ -369,6 +402,8 @@ def get_social_links() -> List[Dict[str, Any]]:
 
 
 def get_setlist_tracks() -> List[Dict[str, Any]]:
+  if not DB_POOL:
+    return []
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute(
@@ -379,6 +414,8 @@ def get_setlist_tracks() -> List[Dict[str, Any]]:
 
 
 def get_top_tracks() -> List[Dict[str, Any]]:
+  if not DB_POOL:
+    return []
   with DB_POOL.connection() as conn:
     with conn.cursor() as cur:
       cur.execute(
@@ -489,7 +526,7 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
   daemon_threads = True
 
 
-def load_font(size: int) -> ImageFont.ImageFont:
+def load_font(size: int) -> Any:
   font_paths = [
     PUBLIC_DIR / 'assets' / 'fonts' / 'SpaceGrotesk-Bold.ttf',
     PUBLIC_DIR / 'assets' / 'fonts' / 'Manrope-Bold.ttf'
