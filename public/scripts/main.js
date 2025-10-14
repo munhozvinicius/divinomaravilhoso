@@ -11,47 +11,57 @@ async function fetchJSON(path, fallback = []) {
   }
 }
 
-function formatCurrency(value) {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
-}
-
 function getDateParts(dateIso) {
   const date = new Date(`${dateIso}T00:00:00`);
   const day = date.toLocaleDateString('pt-BR', { day: '2-digit', timeZone: 'UTC' });
-  const monthRaw = date.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' });
-  const weekdayRaw = date.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' });
-  const month = monthRaw.replace('.', '').toUpperCase();
-  const weekday = weekdayRaw.charAt(0).toUpperCase() + weekdayRaw.slice(1);
-  return { day, month, weekday };
+  const month = date.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' }).replace('.', '').toUpperCase();
+  const weekday = date
+    .toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' })
+    .replace(/^(\w)/, (match) => match.toUpperCase());
+  const year = date.getFullYear();
+  return { day, month, weekday, year };
 }
 
 function createAgendaCard(evento) {
   const article = document.createElement('article');
-  article.className = 'agenda-card';
-  const { day, month, weekday } = getDateParts(evento.date_iso);
+  article.className = 'agenda-card glass-panel';
+  const { day, month, weekday, year } = getDateParts(evento.date_iso);
+
   const instagramButton =
     evento.instagram_url
       ? `
         <a class="btn btn-instagram" target="_blank" rel="noopener" href="${evento.instagram_url}">
           <span class="btn-icon" aria-hidden="true">📸</span>
-          <span>Instagram do local</span>
+          Instagram do local
         </a>
       `
       : '';
+
+  const shareLabel = `${evento.title} ${day}-${month}-${year}`
+    .replace(/[^a-zA-Z0-9-_]/g, '-')
+    .replace(/-+/g, '-');
+  const shareButton = `
+    <a
+      class="btn btn-outline btn-share"
+      href="/api/events/${evento.id}/story-card.png"
+      target="_blank"
+      download="divino-${shareLabel}.png"
+    >
+      Salvar lambe-lambe
+    </a>
+  `;
+
   const ticketsButton =
     evento.tickets_link
       ? `
-        <a class="btn btn-outline btn-outline-dark" target="_blank" rel="noopener" href="${evento.tickets_link}">
-          Ingressos
-        </a>
+        <a class="btn btn-outline" target="_blank" rel="noopener" href="${evento.tickets_link}">Ingressos</a>
       `
       : '';
-  const actions = [instagramButton, ticketsButton].filter(Boolean).join('');
+
+  const actions = [instagramButton, ticketsButton, shareButton].filter(Boolean).join('');
+
   article.innerHTML = `
-    <div class="agenda-card-header">
+    <header class="agenda-card-header">
       <div class="agenda-date">
         <span class="agenda-day">${day}</span>
         <span class="agenda-month">${month}</span>
@@ -63,253 +73,171 @@ function createAgendaCard(evento) {
         <p class="agenda-venue">${evento.venue}</p>
         <p class="agenda-city">${evento.city}</p>
       </div>
-    </div>
+    </header>
     ${evento.description ? `<p class="agenda-description">${evento.description}</p>` : ''}
-    ${actions ? `<div class="agenda-actions">${actions}</div>` : ''}
+    <div class="agenda-actions">${actions}</div>
   `;
   return article;
 }
 
-function createProductCard(produto) {
-  const card = document.createElement('article');
-  card.className = 'product-card';
-  card.innerHTML = `
-    <div class="product-illustration">${produto.category}</div>
-    <span class="badge">${produto.is_new ? 'lançamento' : 'clássico'}</span>
-    <h3>${produto.name}</h3>
-    <p>${produto.description}</p>
-    <span class="price">${formatCurrency(produto.price)}</span>
-    <button class="btn btn-primary" data-product-id="${produto.id}">Adicionar</button>
-  `;
-  return card;
-}
-
-const cart = {
-  items: new Map(),
-  load() {
-    const saved = localStorage.getItem('divino-cart');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        parsed.forEach((item) => this.items.set(item.id, item));
-      } catch (error) {
-        console.warn('Falha ao restaurar carrinho:', error.message);
-      }
-    }
-  },
-  persist() {
-    localStorage.setItem('divino-cart', JSON.stringify(Array.from(this.items.values())));
-  },
-  add(product) {
-    const existing = this.items.get(product.id);
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      this.items.set(product.id, { ...product, quantity: 1 });
-    }
-    this.persist();
-  },
-  remove(productId) {
-    this.items.delete(productId);
-    this.persist();
-  },
-  clear() {
-    this.items.clear();
-    this.persist();
-  },
-  summary() {
-    const total = Array.from(this.items.values()).reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
-    );
-    const quantity = Array.from(this.items.values()).reduce(
-      (acc, item) => acc + item.quantity,
-      0
-    );
-    return { total, quantity };
-  }
-};
-
-function renderCart() {
-  const container = document.getElementById('cart-items');
-  if (!container) return;
-
-  container.innerHTML = '';
-  if (cart.items.size === 0) {
-    const empty = document.createElement('p');
-    empty.className = 'empty-cart';
-    empty.textContent = 'O carrinho está vazio. Escolha seus itens favoritos.';
-    container.appendChild(empty);
-  } else {
-    for (const item of cart.items.values()) {
-      const row = document.createElement('div');
-      row.className = 'cart-item';
-      row.innerHTML = `
-        <span>${item.name} × ${item.quantity}</span>
-        <div>
-          <strong>${formatCurrency(item.price * item.quantity)}</strong>
-          <button class="remove-item" data-remove="${item.id}">remover</button>
-        </div>
-      `;
-      container.appendChild(row);
-    }
-  }
-
-  const { total, quantity } = cart.summary();
-  const countEl = document.getElementById('cart-count');
-  const totalEl = document.getElementById('cart-total');
-  if (countEl) countEl.textContent = `${quantity} ${quantity === 1 ? 'item' : 'itens'}`;
-  if (totalEl) totalEl.textContent = formatCurrency(total);
-}
-
-function attachCartListeners(products) {
-  const storeGrid = document.getElementById('store-grid');
-  if (storeGrid) {
-    storeGrid.addEventListener('click', (event) => {
-      const button = event.target.closest('button[data-product-id]');
-      if (!button) return;
-      const productId = Number(button.dataset.productId);
-      const product = products.find((p) => p.id === productId);
-      if (product) {
-        cart.add(product);
-        renderCart();
-      }
-    });
-  }
-
-  const cartItems = document.getElementById('cart-items');
-  if (cartItems) {
-    cartItems.addEventListener('click', (event) => {
-      const remove = event.target.closest('button[data-remove]');
-      if (!remove) return;
-      const productId = Number(remove.dataset.remove);
-      cart.remove(productId);
-      renderCart();
-    });
-  }
-}
-
 async function renderAgenda() {
-  const eventos = await fetchJSON('/api/events');
   const container = document.getElementById('agenda-cards');
   if (!container) return;
   container.innerHTML = '';
-
+  const eventos = await fetchJSON('/api/events');
+  if (!Array.isArray(eventos) || eventos.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Em breve novas datas neon.';
+    container.appendChild(empty);
+    return;
+  }
   eventos.slice(0, 4).forEach((evento) => {
     container.appendChild(createAgendaCard(evento));
   });
 }
 
-async function renderProducts() {
-  const produtos = await fetchJSON('/api/products');
-  const grid = document.getElementById('store-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  produtos.forEach((produto) => {
-    grid.appendChild(createProductCard(produto));
-  });
-  attachCartListeners(produtos);
-}
-
-async function renderSocialLinks() {
-  const links = await fetchJSON('/api/social');
-  const container = document.getElementById('social-links');
-  if (!container) return;
-
-  container.innerHTML = '';
-  links.forEach((link) => {
-    const anchor = document.createElement('a');
-    anchor.href = link.url;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener';
-    anchor.textContent = link.label;
-    container.appendChild(anchor);
-  });
-}
-
-async function handleCheckout(event) {
-  event.preventDefault();
-  const feedback = document.getElementById('checkout-feedback');
-  if (cart.items.size === 0) {
-    feedback.textContent = 'Adicione itens ao carrinho antes de enviar o pedido.';
-    feedback.style.color = '#ff4d6d';
+async function renderTopTracks() {
+  const list = document.getElementById('top-tracks');
+  if (!list) return;
+  list.innerHTML = '';
+  const tracks = await fetchJSON('/api/setlist/top');
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Seja a primeira pessoa a votar na setlist!';
+    list.appendChild(empty);
     return;
   }
+  tracks.forEach((track, index) => {
+    const item = document.createElement('li');
+    item.innerHTML = `
+      <span class="track-rank">#${index + 1}</span>
+      <span class="track-name">${track.track_name}</span>
+      <span class="track-votes">${track.votos} voto${track.votos === 1 ? '' : 's'}</span>
+    `;
+    list.appendChild(item);
+  });
+}
 
-  const form = event.currentTarget;
-  const formData = new FormData(form);
-  const payload = {
-    customer: {
-      name: formData.get('nome'),
-      email: formData.get('email'),
-      phone: formData.get('telefone'),
-      address: formData.get('endereco'),
-      payment_method: formData.get('pagamento')
-    },
-    items: Array.from(cart.items.values()).map((item) => ({
-      id: item.id,
-      quantity: item.quantity
-    }))
-  };
-
+function formatRelative(dateIso) {
   try {
-    const response = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const date = new Date(dateIso);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-    if (!response.ok) throw new Error('Falha ao registrar pedido');
-    const data = await response.json();
-    feedback.textContent = `Pedido recebido! Código: ${data.order_id}`;
-    feedback.style.color = '#1ed760';
-    form.reset();
-    cart.clear();
-    renderCart();
   } catch (error) {
-    feedback.textContent = 'Não foi possível registrar o pedido agora. Tente novamente mais tarde.';
-    feedback.style.color = '#ff4d6d';
-    console.error(error);
+    return '';
   }
 }
 
-async function handleNewsletter(event) {
-  event.preventDefault();
-  const input = document.getElementById('newsletter-email');
+async function renderComments() {
+  const container = document.getElementById('setlist-comments');
+  if (!container) return;
+  container.innerHTML = '';
+  const comments = await fetchJSON('/api/setlist/comments?limit=12');
+  if (!Array.isArray(comments) || comments.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = 'Deixe sua ideia para inaugurar o mural neon!';
+    container.appendChild(empty);
+    return;
+  }
+  comments.forEach((comment) => {
+    const item = document.createElement('article');
+    item.className = 'comment-item';
+    item.innerHTML = `
+      <header>
+        <strong>${comment.contributor_name || 'Anônimo neon'}</strong>
+        <time>${formatRelative(comment.created_at)}</time>
+      </header>
+      <p>${comment.idea}</p>
+    `;
+    container.appendChild(item);
+  });
+}
+
+async function postJSON(path, payload) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || 'Falha ao enviar');
+  }
+  return response.json();
+}
+
+function handleSetlistVote() {
+  const form = document.getElementById('setlist-form');
+  const feedback = document.getElementById('vote-feedback');
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    feedback.textContent = '';
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      await postJSON('/api/setlist/vote', data);
+      form.reset();
+      feedback.textContent = 'Voto registrado! Obrigado por iluminar o set.';
+      feedback.classList.remove('error');
+      await renderTopTracks();
+    } catch (error) {
+      feedback.textContent = 'Não foi possível registrar o voto. Tente novamente.';
+      feedback.classList.add('error');
+    }
+  });
+}
+
+function handleCommentForm() {
+  const form = document.getElementById('comment-form');
+  const feedback = document.getElementById('comment-feedback');
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    feedback.textContent = '';
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      await postJSON('/api/setlist/comment', data);
+      form.reset();
+      feedback.textContent = 'Sugestão recebida! Vamos analisar com carinho.';
+      feedback.classList.remove('error');
+      await renderComments();
+    } catch (error) {
+      feedback.textContent = 'Não rolou enviar agora. Pode tentar de novo?';
+      feedback.classList.add('error');
+    }
+  });
+}
+
+function handleNewsletter() {
+  const form = document.getElementById('newsletter-form');
   const feedback = document.getElementById('newsletter-feedback');
-  try {
-    const response = await fetch('/api/newsletter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: input.value })
-    });
-    if (!response.ok) throw new Error('Falha no cadastro');
-    feedback.textContent = 'E-mail cadastrado. Obrigado por fazer parte!';
-    feedback.style.color = '#1ed760';
-    input.value = '';
-  } catch (error) {
-    feedback.textContent = 'Não foi possível cadastrar agora.';
-    feedback.style.color = '#ff4d6d';
-  }
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    feedback.textContent = '';
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      await postJSON('/api/newsletter', data);
+      form.reset();
+      feedback.textContent = 'Você está na lista! Enviaremos o drop neon em primeira mão.';
+      feedback.classList.remove('error');
+    } catch (error) {
+      feedback.textContent = 'Não conseguimos salvar seu e-mail agora. Tente novamente.';
+      feedback.classList.add('error');
+    }
+  });
 }
 
-function initForms() {
-  const checkoutForm = document.getElementById('checkout-form');
-  if (checkoutForm) {
-    checkoutForm.addEventListener('submit', handleCheckout);
-  }
-
-  const newsletterForm = document.getElementById('newsletter-form');
-  if (newsletterForm) {
-    newsletterForm.addEventListener('submit', handleNewsletter);
-  }
-}
-
-async function bootstrap() {
-  cart.load();
-  renderCart();
-  await Promise.all([renderAgenda(), renderProducts(), renderSocialLinks()]);
-  initForms();
-}
-
-bootstrap();
+renderAgenda();
+renderTopTracks();
+renderComments();
+handleSetlistVote();
+handleCommentForm();
+handleNewsletter();

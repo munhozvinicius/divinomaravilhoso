@@ -1,95 +1,125 @@
 #!/usr/bin/env python3
+import io
 import json
-import sqlite3
-from datetime import datetime
+import os
+from datetime import date, datetime
 from http import HTTPStatus
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from socketserver import ThreadingMixIn
 from typing import Any, Dict, Iterable, List, Tuple
+from urllib.parse import parse_qs, urlparse
+
+from PIL import Image, ImageDraw, ImageFont
+from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
 BASE_DIR = Path(__file__).resolve().parent
 PUBLIC_DIR = BASE_DIR / 'public'
-DATA_DIR = BASE_DIR / 'data'
-DB_PATH = DATA_DIR / 'divino.db'
+DATABASE_URL = os.getenv(
+  'DATABASE_URL',
+  'postgresql://neondb_owner:npg_EunfT2mh0Sci@ep-calm-sky-aczofamt-pooler.sa-east-1.aws.neon.tech/Divino%20?sslmode=require&channel_binding=require'
+)
+
+DB_POOL = ConnectionPool(
+  conninfo=DATABASE_URL,
+  min_size=1,
+  max_size=6,
+  kwargs={'autocommit': True, 'row_factory': dict_row}
+)
 
 
-def dict_factory(cursor: sqlite3.Cursor, row: Tuple[Any, ...]) -> Dict[str, Any]:
-  return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+def init_db() -> None:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS events (
+          id SERIAL PRIMARY KEY,
+          title TEXT NOT NULL,
+          date_iso DATE NOT NULL,
+          city TEXT NOT NULL,
+          venue TEXT NOT NULL,
+          status TEXT DEFAULT 'confirmado',
+          description TEXT,
+          tickets_link TEXT,
+          instagram_url TEXT
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS products (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          slug TEXT UNIQUE,
+          description TEXT,
+          price_cents INTEGER NOT NULL,
+          category TEXT,
+          is_new BOOLEAN DEFAULT FALSE,
+          inventory INTEGER DEFAULT 0
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS orders (
+          id SERIAL PRIMARY KEY,
+          customer_name TEXT NOT NULL,
+          customer_email TEXT NOT NULL,
+          customer_phone TEXT,
+          customer_address TEXT,
+          payment_method TEXT,
+          total_cents INTEGER NOT NULL,
+          items_json JSONB NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+          id SERIAL PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS social_links (
+          id SERIAL PRIMARY KEY,
+          label TEXT NOT NULL,
+          url TEXT NOT NULL,
+          platform TEXT
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS setlist_votes (
+          id SERIAL PRIMARY KEY,
+          track_name TEXT NOT NULL,
+          voter_name TEXT,
+          voter_contact TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        '''
+      )
+      cur.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS setlist_comments (
+          id SERIAL PRIMARY KEY,
+          contributor_name TEXT,
+          idea TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        '''
+      )
+  seed_data()
 
 
-def init_db() -> sqlite3.Connection:
-  DATA_DIR.mkdir(exist_ok=True)
-  conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-  conn.row_factory = dict_factory
-  with conn:
-    conn.executescript(
-      """
-      CREATE TABLE IF NOT EXISTS events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        date_iso TEXT NOT NULL,
-        city TEXT NOT NULL,
-        venue TEXT NOT NULL,
-        status TEXT DEFAULT 'confirmado',
-        description TEXT,
-        tickets_link TEXT,
-        instagram_url TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        slug TEXT UNIQUE,
-        description TEXT,
-        price_cents INTEGER NOT NULL,
-        category TEXT,
-        is_new INTEGER DEFAULT 0,
-        inventory INTEGER DEFAULT 0
-      );
-
-      CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_name TEXT NOT NULL,
-        customer_email TEXT NOT NULL,
-        customer_phone TEXT,
-        customer_address TEXT,
-        payment_method TEXT,
-        total_cents INTEGER NOT NULL,
-        items_json TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS social_links (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        label TEXT NOT NULL,
-        url TEXT NOT NULL,
-        platform TEXT
-      );
-      """
-    )
-  ensure_column(conn, 'events', 'instagram_url', 'instagram_url TEXT')
-  seed_data(conn)
-  return conn
-
-
-def ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
-  columns = {row['name'] for row in conn.execute(f'PRAGMA table_info({table})')}
-  if column not in columns:
-    conn.execute(f'ALTER TABLE {table} ADD COLUMN {definition}')
-
-
-def seed_data(conn: sqlite3.Connection) -> None:
-  def table_has_rows(table: str) -> bool:
-    cursor = conn.execute(f'SELECT COUNT(*) as total FROM {table}')
-    return cursor.fetchone()['total'] > 0
-
+def seed_data() -> None:
   events = [
     (
       'BelzeBeer',
@@ -132,75 +162,91 @@ def seed_data(conn: sqlite3.Connection) -> None:
       None
     )
   ]
-  with conn:
-    conn.execute('DELETE FROM events')
-    conn.executemany(
-      'INSERT INTO events (title, date_iso, city, venue, status, description, tickets_link, instagram_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      events
-    )
 
-  if not table_has_rows('products'):
-    products = [
-      (
-        'Boné Divino Maravilhoso',
-        'bone-divino',
-        'Boné aba curva, ajuste traseiro e arte bordada inspirada nos painéis tropicalistas.',
-        12990,
-        'Bonés',
-        1,
-        120
-      ),
-      (
-        'Camiseta Manifesto',
-        'camiseta-manifesto',
-        'Malha premium 100% algodão com estampa frente e verso do manifesto tropical urbano.',
-        15990,
-        'Camisetas',
-        1,
-        200
-      ),
-      (
-        'Adesivos Psicodélicos',
-        'adesivos-psicodelicos',
-        'Kit com 8 adesivos vinílicos resistentes à água com arte exclusiva da turnê.',
-        3990,
-        'Adesivos',
-        0,
-        500
-      ),
-      (
-        'Bandeira Palco Livre',
-        'bandeira-palco-livre',
-        'Bandeira tecido oxford 1,5m × 1m para levantar em festivais e manifestações.',
-        8990,
-        'Bandeiras',
-        0,
-        80
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('DELETE FROM events;')
+      cur.executemany(
+        '''
+        INSERT INTO events (title, date_iso, city, venue, status, description, tickets_link, instagram_url)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''',
+        events
       )
-    ]
-    conn.executemany(
-      'INSERT INTO products (name, slug, description, price_cents, category, is_new, inventory) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      products
-    )
 
-  if not table_has_rows('social_links'):
-    links = [
-      ('Instagram', 'https://www.instagram.com/divinomaravilhosobr', 'instagram'),
-      ('YouTube', 'https://www.youtube.com/@divinomaravilhoso', 'youtube'),
-      ('Spotify', 'https://open.spotify.com/artist/3tKDivino', 'spotify'),
-      ('Contato por e-mail', 'mailto:munhoz.vinicius@gmail.com', 'email')
-    ]
-    conn.executemany(
-      'INSERT INTO social_links (label, url, platform) VALUES (?, ?, ?)',
-      links
-    )
+      cur.execute('SELECT COUNT(*) AS total FROM products;')
+      if cur.fetchone()['total'] == 0:
+        products = [
+          (
+            'Boné Divino Maravilhoso',
+            'bone-divino',
+            'Boné aba curva, ajuste traseiro e arte bordada inspirada nos painéis tropicalistas.',
+            12990,
+            'Bonés',
+            True,
+            120
+          ),
+          (
+            'Camiseta Manifesto',
+            'camiseta-manifesto',
+            'Malha premium 100% algodão com estampa frente e verso do manifesto tropical urbano.',
+            15990,
+            'Camisetas',
+            True,
+            200
+          ),
+          (
+            'Adesivos Psicodélicos',
+            'adesivos-psicodelicos',
+            'Kit com 8 adesivos vinílicos resistentes à água com arte exclusiva da turnê.',
+            3990,
+            'Adesivos',
+            False,
+            500
+          ),
+          (
+            'Bandeira Palco Livre',
+            'bandeira-palco-livre',
+            'Bandeira tecido oxford 1,5m × 1m para levantar em festivais e manifestações.',
+            8990,
+            'Bandeiras',
+            False,
+            80
+          )
+        ]
+        cur.executemany(
+          '''
+          INSERT INTO products (name, slug, description, price_cents, category, is_new, inventory)
+          VALUES (%s, %s, %s, %s, %s, %s, %s)
+          ''',
+          products
+        )
+
+      cur.execute('SELECT COUNT(*) AS total FROM social_links;')
+      if cur.fetchone()['total'] == 0:
+        links = [
+          ('Instagram', 'https://www.instagram.com/divinomaravilhosobr', 'instagram'),
+          ('YouTube', 'https://www.youtube.com/@divinomaravilhoso', 'youtube'),
+          ('Spotify', 'https://open.spotify.com/playlist/4NCPXGyXVz6UM3QVXjFQn3?si=yr7rOCeTQvujWdmVFJQ38A', 'spotify'),
+          ('Contato por e-mail', 'mailto:munhoz.vinicius@gmail.com', 'email')
+        ]
+        cur.executemany(
+          'INSERT INTO social_links (label, url, platform) VALUES (%s, %s, %s);',
+          links
+        )
 
 
 def format_event(row: Dict[str, Any]) -> Dict[str, Any]:
-  date_obj = datetime.fromisoformat(row['date_iso'])
-  date_label = date_obj.strftime('%d/%m/%Y')
+  raw_date = row['date_iso']
+  if isinstance(raw_date, datetime):
+    date_obj = raw_date
+  elif isinstance(raw_date, date):
+    date_obj = datetime.combine(raw_date, datetime.min.time())
+  else:
+    date_obj = datetime.fromisoformat(str(raw_date))
   formatted = dict(row)
-  formatted['date_label'] = date_label
+  formatted['date_iso'] = date_obj.date().isoformat()
+  formatted['date_label'] = date_obj.strftime('%d/%m/%Y')
   formatted['instagram_url'] = row.get('instagram_url')
   return formatted
 
@@ -212,51 +258,179 @@ def format_product(row: Dict[str, Any]) -> Dict[str, Any]:
   return formatted
 
 
-def get_events(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-  cursor = conn.execute('SELECT * FROM events ORDER BY date_iso ASC')
-  return [format_event(row) for row in cursor.fetchall()]
+def get_events() -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('SELECT * FROM events ORDER BY date_iso ASC;')
+      rows = cur.fetchall()
+  return [format_event(row) for row in rows]
 
 
-def get_products(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-  cursor = conn.execute('SELECT * FROM products ORDER BY is_new DESC, name ASC')
-  return [format_product(row) for row in cursor.fetchall()]
+def get_products() -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('SELECT * FROM products ORDER BY is_new DESC, name ASC;')
+      rows = cur.fetchall()
+  return [format_product(row) for row in rows]
 
 
-def get_social_links(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
-  cursor = conn.execute('SELECT label, url, platform FROM social_links ORDER BY id ASC')
-  return cursor.fetchall()
+def get_social_links() -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('SELECT label, url, platform FROM social_links ORDER BY id ASC;')
+      rows = cur.fetchall()
+  return rows
 
 
-def calculate_order_total(conn: sqlite3.Connection, items: Iterable[Dict[str, Any]]) -> Tuple[int, List[Dict[str, Any]]]:
+def get_top_tracks() -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        '''
+        SELECT track_name, COUNT(*) AS votos, MAX(created_at) AS last_vote
+        FROM setlist_votes
+        GROUP BY track_name
+        ORDER BY votos DESC, last_vote DESC
+        LIMIT 10;
+        '''
+      )
+      rows = cur.fetchall()
+  return rows
+
+
+def get_recent_comments(limit: int = 20) -> List[Dict[str, Any]]:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        '''
+        SELECT contributor_name, idea, created_at
+        FROM setlist_comments
+        ORDER BY created_at DESC
+        LIMIT %s;
+        ''',
+        (limit,)
+      )
+      rows = cur.fetchall()
+  return rows
+
+
+def calculate_order_total(items: Iterable[Dict[str, Any]]) -> Tuple[int, List[Dict[str, Any]]]:
   validated_items: List[Dict[str, Any]] = []
   total_cents = 0
-  for item in items:
-    product_id = item.get('id')
-    quantity = int(item.get('quantity', 0))
-    if quantity <= 0:
-      continue
-    product = conn.execute('SELECT id, name, price_cents FROM products WHERE id = ?', (product_id,)).fetchone()
-    if not product:
-      continue
-    subtotal = product['price_cents'] * quantity
-    total_cents += subtotal
-    validated_items.append({
-      'id': product['id'],
-      'name': product['name'],
-      'price_cents': product['price_cents'],
-      'quantity': quantity,
-      'subtotal_cents': subtotal
-    })
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      for item in items:
+        product_id = item.get('id')
+        try:
+          quantity = int(item.get('quantity', 0))
+        except (TypeError, ValueError):
+          quantity = 0
+        if quantity <= 0:
+          continue
+        cur.execute('SELECT id, name, price_cents FROM products WHERE id = %s;', (product_id,))
+        product = cur.fetchone()
+        if not product:
+          continue
+        subtotal = product['price_cents'] * quantity
+        total_cents += subtotal
+        validated_items.append({
+          'id': product['id'],
+          'name': product['name'],
+          'price_cents': product['price_cents'],
+          'quantity': quantity,
+          'subtotal_cents': subtotal
+        })
   return total_cents, validated_items
+
+
+def insert_vote(track_name: str, voter_name: str | None, voter_contact: str | None) -> None:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        'INSERT INTO setlist_votes (track_name, voter_name, voter_contact) VALUES (%s, %s, %s);',
+        (track_name.strip(), voter_name, voter_contact)
+      )
+
+
+def insert_comment(contributor_name: str | None, idea: str) -> None:
+  with DB_POOL.connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute(
+        'INSERT INTO setlist_comments (contributor_name, idea) VALUES (%s, %s);',
+        (contributor_name, idea)
+      )
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
   daemon_threads = True
 
 
+def load_font(size: int) -> ImageFont.ImageFont:
+  font_paths = [
+    PUBLIC_DIR / 'assets' / 'fonts' / 'SpaceGrotesk-Bold.ttf',
+    PUBLIC_DIR / 'assets' / 'fonts' / 'Manrope-Bold.ttf'
+  ]
+  for path in font_paths:
+    if path.exists():
+      try:
+        return ImageFont.truetype(str(path), size)
+      except OSError:
+        continue
+  return ImageFont.load_default()
+
+
+def generate_story_card(event: Dict[str, Any]) -> bytes:
+  width, height = 1080, 1920
+  base = Image.new('RGBA', (width, height), '#040404')
+  overlay = Image.new('RGBA', (width, height))
+  overlay_draw = ImageDraw.Draw(overlay)
+
+  neon_colors = [
+    (255, 51, 153, 220),
+    (64, 224, 208, 200),
+    (255, 255, 255, 160)
+  ]
+
+  for idx, color in enumerate(neon_colors):
+    overlay_draw.ellipse(
+      (
+        -200 + idx * 180,
+        200 + idx * 120,
+        width + 200 - idx * 120,
+        height - 200 + idx * 90
+      ),
+      fill=color
+    )
+
+  blended = Image.alpha_composite(base, overlay)
+  draw = ImageDraw.Draw(blended)
+
+  title_font = load_font(88)
+  label_font = load_font(48)
+  body_font = load_font(42)
+
+  draw.text((60, 120), 'Agremiação Musical', font=label_font, fill='#f7f8f9')
+  draw.text((60, 210), 'DIVINO MARAVILHOSO', font=title_font, fill='#00ffd1')
+
+  date_obj = datetime.fromisoformat(event['date_iso'])
+  date_str = date_obj.strftime('%d %b %Y').upper()
+  weekday = date_obj.strftime('%A').capitalize()
+
+  draw.text((60, 400), f"{weekday} · {date_str}", font=label_font, fill='#ffffff')
+  draw.text((60, 480), event['title'], font=title_font, fill='#ff36a3')
+  draw.text((60, 580), event['venue'], font=body_font, fill='#e9fffd')
+  draw.text((60, 640), event['city'], font=body_font, fill='#e9fffd')
+
+  draw.rectangle((60, 780, width - 60, 960), outline='#ffffff', width=6)
+  draw.text((90, 810), 'Confirme sua presença e marque @divinomaravilhosobr', font=body_font, fill='#ffffff')
+
+  buffer = io.BytesIO()
+  blended.convert('RGB').save(buffer, format='PNG')
+  return buffer.getvalue()
+
+
 class DivinoHandler(SimpleHTTPRequestHandler):
   def __init__(self, *args, **kwargs):
-    self.conn = DB_CONN
     super().__init__(*args, directory=str(PUBLIC_DIR), **kwargs)
 
   def _set_json_headers(self, status: HTTPStatus = HTTPStatus.OK) -> None:
@@ -275,24 +449,71 @@ class DivinoHandler(SimpleHTTPRequestHandler):
       self.handle_create_order()
     elif self.path == '/api/newsletter':
       self.handle_newsletter_signup()
+    elif self.path == '/api/setlist/vote':
+      self.handle_vote()
+    elif self.path == '/api/setlist/comment':
+      self.handle_comment()
     else:
       self.send_error(HTTPStatus.NOT_FOUND, 'Endpoint não encontrado')
 
   def handle_api_get(self) -> None:
-    if self.path == '/api/events':
-      events = get_events(self.conn)
+    parsed = urlparse(self.path)
+    path_parts = parsed.path.strip('/').split('/')
+
+    if parsed.path == '/api/events':
+      events = get_events()
       self._set_json_headers()
       self.wfile.write(json.dumps(events).encode('utf-8'))
-    elif self.path == '/api/products':
-      products = get_products(self.conn)
+      return
+
+    if parsed.path == '/api/products':
+      products = get_products()
       self._set_json_headers()
       self.wfile.write(json.dumps(products).encode('utf-8'))
-    elif self.path == '/api/social':
-      links = get_social_links(self.conn)
+      return
+
+    if parsed.path == '/api/social':
+      links = get_social_links()
       self._set_json_headers()
       self.wfile.write(json.dumps(links).encode('utf-8'))
-    else:
-      self.send_error(HTTPStatus.NOT_FOUND, 'Endpoint não encontrado')
+      return
+
+    if parsed.path == '/api/setlist/top':
+      top_tracks = get_top_tracks()
+      self._set_json_headers()
+      self.wfile.write(json.dumps(top_tracks).encode('utf-8'))
+      return
+
+    if parsed.path == '/api/setlist/comments':
+      query = parse_qs(parsed.query)
+      limit = int(query.get('limit', ['20'])[0])
+      comments = get_recent_comments(limit=limit)
+      self._set_json_headers()
+      self.wfile.write(json.dumps(comments).encode('utf-8'))
+      return
+
+    if len(path_parts) == 4 and path_parts[0] == 'api' and path_parts[1] == 'events' and path_parts[3] == 'story-card.png':
+      try:
+        event_id = int(path_parts[2])
+      except ValueError:
+        self.send_error(HTTPStatus.BAD_REQUEST, 'ID inválido')
+        return
+      with DB_POOL.connection() as conn:
+        with conn.cursor() as cur:
+          cur.execute('SELECT * FROM events WHERE id = %s;', (event_id,))
+          event = cur.fetchone()
+      if not event:
+        self.send_error(HTTPStatus.NOT_FOUND, 'Evento não encontrado')
+        return
+      payload = generate_story_card(format_event(event))
+      self.send_response(HTTPStatus.OK)
+      self.send_header('Content-Type', 'image/png')
+      self.send_header('Content-Length', str(len(payload)))
+      self.end_headers()
+      self.wfile.write(payload)
+      return
+
+    self.send_error(HTTPStatus.NOT_FOUND, 'Endpoint não encontrado')
 
   def handle_create_order(self) -> None:
     length = int(self.headers.get('Content-Length', '0'))
@@ -309,29 +530,30 @@ class DivinoHandler(SimpleHTTPRequestHandler):
       self.send_error(HTTPStatus.BAD_REQUEST, 'Informações do cliente incompletas')
       return
 
-    total_cents, validated_items = calculate_order_total(self.conn, items)
+    total_cents, validated_items = calculate_order_total(items)
     if total_cents == 0 or not validated_items:
       self.send_error(HTTPStatus.BAD_REQUEST, 'Nenhum item válido no pedido')
       return
 
-    with self.conn:
-      cursor = self.conn.execute(
-        (
-          'INSERT INTO orders '
-          '(customer_name, customer_email, customer_phone, customer_address, payment_method, total_cents, items_json) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?)'
-        ),
-        (
-          customer.get('name'),
-          customer.get('email'),
-          customer.get('phone'),
-          customer.get('address'),
-          customer.get('payment_method'),
-          total_cents,
-          json.dumps(validated_items)
+    with DB_POOL.connection() as conn:
+      with conn.cursor() as cur:
+        cur.execute(
+          '''
+          INSERT INTO orders (customer_name, customer_email, customer_phone, customer_address, payment_method, total_cents, items_json)
+          VALUES (%s, %s, %s, %s, %s, %s, %s)
+          RETURNING id;
+          ''',
+          (
+            customer.get('name'),
+            customer.get('email'),
+            customer.get('phone'),
+            customer.get('address'),
+            customer.get('payment_method'),
+            total_cents,
+            json.dumps(validated_items)
+          )
         )
-      )
-      order_id = cursor.lastrowid
+        order_id = cur.fetchone()['id']
 
     self._set_json_headers(HTTPStatus.CREATED)
     self.wfile.write(json.dumps({'order_id': order_id, 'total': total_cents / 100}).encode('utf-8'))
@@ -349,21 +571,56 @@ class DivinoHandler(SimpleHTTPRequestHandler):
       self.send_error(HTTPStatus.BAD_REQUEST, 'E-mail é obrigatório')
       return
 
-    try:
-      with self.conn:
-        self.conn.execute(
-          'INSERT OR IGNORE INTO newsletter_subscribers (email) VALUES (?)',
+    with DB_POOL.connection() as conn:
+      with conn.cursor() as cur:
+        cur.execute(
+          'INSERT INTO newsletter_subscribers (email) VALUES (%s) ON CONFLICT (email) DO NOTHING;',
           (email,)
         )
-    except sqlite3.DatabaseError:
-      self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, 'Erro ao salvar e-mail')
-      return
 
     self._set_json_headers(HTTPStatus.CREATED)
     self.wfile.write(json.dumps({'status': 'ok'}).encode('utf-8'))
 
+  def handle_vote(self) -> None:
+    length = int(self.headers.get('Content-Length', '0'))
+    try:
+      payload = json.loads(self.rfile.read(length) or '{}')
+    except json.JSONDecodeError:
+      self.send_error(HTTPStatus.BAD_REQUEST, 'JSON inválido')
+      return
 
-DB_CONN = init_db()
+    track_name = (payload.get('track_name') or '').strip()
+    if not track_name:
+      self.send_error(HTTPStatus.BAD_REQUEST, 'Escolha uma música')
+      return
+
+    voter_name = (payload.get('voter_name') or '').strip() or None
+    voter_contact = (payload.get('voter_contact') or '').strip() or None
+
+    insert_vote(track_name, voter_name, voter_contact)
+
+    self._set_json_headers(HTTPStatus.CREATED)
+    self.wfile.write(json.dumps({'status': 'ok'}).encode('utf-8'))
+
+  def handle_comment(self) -> None:
+    length = int(self.headers.get('Content-Length', '0'))
+    try:
+      payload = json.loads(self.rfile.read(length) or '{}')
+    except json.JSONDecodeError:
+      self.send_error(HTTPStatus.BAD_REQUEST, 'JSON inválido')
+      return
+
+    idea = (payload.get('idea') or '').strip()
+    if not idea:
+      self.send_error(HTTPStatus.BAD_REQUEST, 'Conte sua ideia de música')
+      return
+
+    contributor_name = (payload.get('contributor_name') or '').strip() or None
+
+    insert_comment(contributor_name, idea)
+
+    self._set_json_headers(HTTPStatus.CREATED)
+    self.wfile.write(json.dumps({'status': 'ok'}).encode('utf-8'))
 
 
 def run_server(port: int = 8000) -> None:
@@ -376,6 +633,8 @@ def run_server(port: int = 8000) -> None:
     print('\nEncerrando servidor...')
   finally:
     httpd.server_close()
+
+init_db()
 
 
 if __name__ == '__main__':

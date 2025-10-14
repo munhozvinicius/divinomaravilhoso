@@ -1,48 +1,65 @@
-# Divino Maravilhoso - Site oficial da banda
+# Divino Maravilhoso — Plataforma oficial
 
-Projeto web inspirado na estética tropical urbana do material fornecido para apresentar a banda Divino Maravilhoso, divulgar agenda, playlist e oferecer uma loja com fluxo de pedidos para merch.
+Experiência web premium para a banda Divino Maravilhoso com visual neon translúcido, agenda interativa, votação de setlist,
+playlist Spotify e base preparada para loja de merch.
 
-## Como executar
+## Requisitos
+
+- Python 3.10+
+- Dependências Python:
+  - [psycopg](https://www.psycopg.org/)
+  - [psycopg-pool](https://www.psycopg.org/psycopg3/docs/api/pool.html)
+  - [Pillow](https://pillow.readthedocs.io/)
+
+Instale-as rapidamente com:
+
+```bash
+python3 -m pip install psycopg[binary] psycopg-pool pillow
+```
+
+## Banco de dados
+
+O projeto utiliza PostgreSQL hospedado na Neon com a seguinte URL padrão:
+
+```
+postgresql://neondb_owner:npg_EunfT2mh0Sci@ep-calm-sky-aczofamt-pooler.sa-east-1.aws.neon.tech/Divino%20?sslmode=require&channel_binding=require
+```
+
+Defina `DATABASE_URL` caso queira apontar para outra instância.
+
+Na inicialização o servidor garante as tabelas:
+
+- `events`, `products`, `orders`, `newsletter_subscribers`, `social_links`
+- `setlist_votes` e `setlist_comments` para votação e mural de sugestões
+
+Os eventos são semeados com as datas fornecidas, preservando Instagram dos bares e status de cada show.
+
+## Executando o servidor
 
 ```bash
 python3 server.py
 ```
 
-O servidor inicia em `http://localhost:8000` servindo os arquivos estáticos e as APIs REST que alimentam o front-end.
+O servidor sobe em `http://localhost:8000`, servindo o front-end (pasta `public/`) e a API.
 
-## Estrutura
+### Endpoints principais
 
-- `public/` – Site estático (HTML, CSS e JavaScript).
-- `server.py` – Servidor HTTP com API e banco de dados SQLite.
-- `data/divino.db` – Banco de dados com tabelas para agenda, produtos, pedidos, newsletter e redes sociais.
+- `GET /api/events` — agenda completa com links de Instagram
+- `GET /api/events/:id/story-card.png` — gera arte em PNG estilo lambe-lambe para stories
+- `GET /api/setlist/top` — Top 10 músicas mais votadas
+- `GET /api/setlist/comments` — últimas sugestões neon
+- `POST /api/setlist/vote` — registra voto na música favorita
+- `POST /api/setlist/comment` — envia sugestão de faixa/mashup
+- `POST /api/newsletter` — lista de espera da loja
+- `POST /api/orders` — fluxo de pedidos para futuros drops de merch
 
-## API
+## Front-end
 
-### `GET /api/events`
-Lista todos os eventos cadastrados com título, data, cidade, local, status e links de ingresso.
+- Tema dark premium com cartões translúcidos, gradientes rosa/verde/ciano inspirados no Spotify
+- Hero destacando nome da banda, formação e manifesto ao vivo
+- Seção “Sobre” com cards baseados no conteúdo fornecido pelo cliente
+- Agenda com botões para Instagram do local, ingressos e download do cartaz lambe-lambe
+- Área participativa com votação em tempo real da setlist, mural de comentários e Top 10 atualizado
+- Playlist oficial com CTA de pré-save, Instagram destacado e contato direto via e-mail/WhatsApp
 
-### `GET /api/products`
-Lista os itens de merchandise, retornando preço, categoria, estoque e se é lançamento.
-
-### `GET /api/social`
-Retorna as redes sociais oficiais da banda.
-
-### `POST /api/orders`
-Recebe um pedido da loja (`customer` + `items`) e grava no banco. Calcula total a partir dos produtos cadastrados.
-
-### `POST /api/newsletter`
-Cadastro simples de e-mail na base de newsletter.
-
-## Banco de dados
-
-O arquivo SQLite é criado automaticamente na primeira execução com dados iniciais de:
-
-- Agenda com datas confirmadas e em negociação
-- Catálogo de boné, camiseta, adesivos e bandeira
-- Links sociais para Instagram, YouTube, Spotify e e-mail
-
-A partir dessas tabelas é possível evoluir para um painel administrativo e integrar meios de pagamento.
-
-## Customização visual
-
-O layout utiliza gradientes, mosaicos e tipografia condensada para ecoar o design original. O CSS foi construído para ser responsivo e destacar as seções principais da banda.
+Tudo foi construído pensando em responsividade e expansão futura da loja oficial.
