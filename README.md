@@ -6,7 +6,7 @@ playlist Spotify e base preparada para loja de merch.
 ## Requisitos
 
 - Python 3.10+
-- Dependências Python:
+- Dependências Python instaladas via `requirements.txt`:
   - [psycopg](https://www.psycopg.org/)
   - [psycopg-pool](https://www.psycopg.org/psycopg3/docs/api/pool.html)
   - [Pillow](https://pillow.readthedocs.io/)
@@ -14,7 +14,7 @@ playlist Spotify e base preparada para loja de merch.
 Instale-as rapidamente com:
 
 ```bash
-python3 -m pip install psycopg[binary] psycopg-pool pillow
+pip install -r requirements.txt
 ```
 
 ## Banco de dados
@@ -64,3 +64,37 @@ O servidor sobe em `http://localhost:8000`, servindo o front-end (pasta `public/
 - Playlist oficial com CTA de pré-save, Instagram destacado e contato direto via e-mail/WhatsApp
 
 Tudo foi construído pensando em responsividade e expansão futura da loja oficial.
+
+## Deploy na Vercel
+
+O projeto está configurado para deploy automático na Vercel:
+
+1. **Conecte seu repositório GitHub à Vercel**
+2. **Configure a variável de ambiente:**
+   - `DATABASE_URL` com a connection string do PostgreSQL (Neon)
+3. **Deploy automático:** A Vercel detectará automaticamente o `vercel.json`
+
+### Configuração manual (via CLI):
+
+```bash
+# Instale a CLI da Vercel
+npm i -g vercel
+
+# Faça login
+vercel login
+
+# Configure o projeto
+vercel
+
+# Adicione a variável de ambiente
+vercel env add DATABASE_URL
+
+# Deploy
+vercel --prod
+```
+
+### Estrutura para Vercel:
+- `/api/index.py` - Serverless functions (API endpoints)
+- `/public/` - Arquivos estáticos (HTML, CSS, JS, assets)
+- `vercel.json` - Configuração de rotas e builds
+- `requirements.txt` - Dependências Python
