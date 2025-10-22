@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
 """
-Vercel serverless function for Divino Maravilhoso API - Standalone version.
-This version includes all necessary code without importing from server.py
+Vercel serverless API for Divino Maravilhoso
 """
 import os
 import json
@@ -10,7 +8,6 @@ from datetime import date, datetime
 from urllib.parse import urlparse, parse_qs
 from typing import Any, Dict, List
 
-# Database imports
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
@@ -32,7 +29,7 @@ try:
 except Exception as e:
     print(f"Error initializing DB pool: {e}")
 
-# Utility functions
+
 def slugify(value: str) -> str:
     normalized = unicodedata.normalize('NFKD', value or '')
     without_accents = ''.join(ch for ch in normalized if not unicodedata.combining(ch))
@@ -63,7 +60,6 @@ def format_product(row: Dict[str, Any]) -> Dict[str, Any]:
     return formatted
 
 
-# Database query functions
 def get_events() -> List[Dict[str, Any]]:
     if not DB_POOL:
         return []
@@ -171,23 +167,14 @@ def get_recent_comments(limit: int = 20) -> List[Dict[str, Any]]:
         return []
 
 
-# Vercel handler function
-def handler(request, context):
-    """
-    Main Vercel serverless handler.
-    """
+def handler(event, context):
+    """Main Vercel handler"""
     try:
-        # Get request details
-        url = request.get('url', '/')
-        method = request.get('method', 'GET')
-
-        # Parse URL
-        parsed = urlparse(url)
-        path = parsed.path
-        path_parts = path.strip('/').split('/')
-
-        # Set CORS headers
-        headers = {
+        # Extract request info from Vercel event
+        http_method = event.get('httpMethod') or event.get('method', 'GET')
+        path = event.get('path') or event.get('rawPath', '/')
+        query_params = event.get('queryStringParameters') or {}
+        headers_out = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type',
@@ -195,88 +182,70 @@ def handler(request, context):
         }
 
         # Handle OPTIONS for CORS
-        if method == 'OPTIONS':
+        if http_method == 'OPTIONS':
             return {
                 'statusCode': 200,
-                'headers': headers,
+                'headers': headers_out,
                 'body': ''
             }
 
         # GET requests
-        if method == 'GET':
-            # Events API
+        if http_method == 'GET':
             if path == '/api/events':
-                events = get_events()
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(events)
+                    'headers': headers_out,
+                    'body': json.dumps(get_events())
                 }
 
-            # Products API
             if path == '/api/products':
-                products = get_products()
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(products)
+                    'headers': headers_out,
+                    'body': json.dumps(get_products())
                 }
 
-            # Social links API
             if path == '/api/social':
-                links = get_social_links()
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(links)
+                    'headers': headers_out,
+                    'body': json.dumps(get_social_links())
                 }
 
-            # Top tracks API
             if path == '/api/setlist/top':
-                top_tracks = get_top_tracks()
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(top_tracks)
+                    'headers': headers_out,
+                    'body': json.dumps(get_top_tracks())
                 }
 
-            # Setlist tracks API
             if path == '/api/setlist/tracks':
-                tracks = get_setlist_tracks()
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(tracks)
+                    'headers': headers_out,
+                    'body': json.dumps(get_setlist_tracks())
                 }
 
-            # Comments API
-            if path.startswith('/api/setlist/comments'):
-                query = parse_qs(parsed.query)
-                limit = int(query.get('limit', ['20'])[0])
-                comments = get_recent_comments(limit=limit)
+            if path == '/api/setlist/comments':
+                limit = int(query_params.get('limit', 20))
                 return {
                     'statusCode': 200,
-                    'headers': headers,
-                    'body': json.dumps(comments)
+                    'headers': headers_out,
+                    'body': json.dumps(get_recent_comments(limit=limit))
                 }
 
         # POST requests
-        if method == 'POST':
+        if http_method == 'POST':
             if not DB_POOL:
                 return {
                     'statusCode': 500,
-                    'headers': headers,
+                    'headers': headers_out,
                     'body': json.dumps({'error': 'Database not available'})
                 }
 
-            # Parse body
-            body_str = request.get('body', '{}')
-            if isinstance(body_str, str):
-                body = json.loads(body_str) if body_str else {}
-            else:
-                body = body_str
+            body_str = event.get('body', '{}')
+            body = json.loads(body_str) if body_str else {}
 
-            # Vote endpoint
             if path == '/api/setlist/vote':
                 track_name = body.get('track_name', '').strip()
                 contributor = body.get('contributor_name', '').strip()
@@ -284,7 +253,7 @@ def handler(request, context):
                 if not track_name:
                     return {
                         'statusCode': 400,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': 'track_name é obrigatório'})
                     }
 
@@ -297,18 +266,17 @@ def handler(request, context):
                             )
                     return {
                         'statusCode': 201,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'track': track_name, 'status': 'ok'})
                     }
                 except Exception as e:
                     print(f"Error recording vote: {e}")
                     return {
                         'statusCode': 500,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': str(e)})
                     }
 
-            # Comment endpoint
             if path == '/api/setlist/comment':
                 idea = body.get('idea', '').strip()
                 contributor = body.get('contributor_name', '').strip()
@@ -316,7 +284,7 @@ def handler(request, context):
                 if not idea:
                     return {
                         'statusCode': 400,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': 'idea é obrigatório'})
                     }
 
@@ -329,25 +297,24 @@ def handler(request, context):
                             )
                     return {
                         'statusCode': 201,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'status': 'ok'})
                     }
                 except Exception as e:
                     print(f"Error recording comment: {e}")
                     return {
                         'statusCode': 500,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': str(e)})
                     }
 
-            # Newsletter endpoint
             if path == '/api/newsletter':
                 email = body.get('email', '').strip()
 
                 if not email or '@' not in email:
                     return {
                         'statusCode': 400,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': 'E-mail inválido'})
                     }
 
@@ -360,26 +327,25 @@ def handler(request, context):
                             )
                     return {
                         'statusCode': 201,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'status': 'ok'})
                     }
                 except Exception as e:
                     print(f"Error recording newsletter signup: {e}")
                     return {
                         'statusCode': 500,
-                        'headers': headers,
+                        'headers': headers_out,
                         'body': json.dumps({'error': str(e)})
                     }
 
         # 404 for unknown endpoints
         return {
             'statusCode': 404,
-            'headers': headers,
+            'headers': headers_out,
             'body': json.dumps({'error': 'Endpoint não encontrado', 'path': path})
         }
 
     except Exception as e:
-        # Error handling
         print(f"Error in handler: {e}")
         import traceback
         traceback.print_exc()
