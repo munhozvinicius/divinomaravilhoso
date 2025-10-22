@@ -1,4 +1,17 @@
-import { fetchJSON, postJSON } from './api.js';
+import { fetchJSON, postJSON, onFallback } from './api.js';
+
+function setupOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  let isVisible = false;
+  const showBanner = () => {
+    if (isVisible) return;
+    isVisible = true;
+    banner.textContent = 'API fora do ar? Sem stress. Estamos exibindo dados de demonstração para você continuar navegando.';
+    banner.classList.remove('is-hidden');
+  };
+  onFallback(showBanner);
+}
 
 function getDateParts(dateIso) {
   const date = new Date(`${dateIso}T00:00:00`);
@@ -243,3 +256,4 @@ handleSetlistVote();
 handleCommentForm();
 handleNewsletter();
 populateTrackChoices();
+setupOfflineBanner();

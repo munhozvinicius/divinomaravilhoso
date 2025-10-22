@@ -156,6 +156,9 @@ const API_FALLBACKS = {
   '/api/setlist/comments': FALLBACK_COMMENTS
 };
 
+const FALLBACK_EVENT = 'api:fallback';
+const fallbackListeners = new Set();
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -167,14 +170,43 @@ function resolveFallback(path, explicitFallback) {
   return fallback ? clone(fallback) : [];
 }
 
+function notifyFallback(path, data) {
+  fallbackListeners.forEach((listener) => {
+    try {
+      listener({ path, data: clone(data) });
+    } catch (error) {
+      console.error('Erro ao notificar fallback:', error);
+    }
+  });
+
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    const CustomEventCtor =
+      typeof window.CustomEvent === 'function'
+        ? window.CustomEvent
+        : typeof CustomEvent === 'function'
+        ? CustomEvent
+        : null;
+    if (CustomEventCtor) {
+      window.dispatchEvent(new CustomEventCtor(FALLBACK_EVENT, { detail: { path } }));
+    }
+  }
+}
+
+export function onFallback(listener) {
+  fallbackListeners.add(listener);
+  return () => fallbackListeners.delete(listener);
+}
+
 export async function fetchJSON(path, fallback) {
   try {
     const response = await fetch(`${API_BASE}${path}`);
     if (!response.ok) throw new Error('Resposta não OK');
     return await response.json();
   } catch (error) {
-    console.warn(`Falha ao carregar ${path}:`, error.message);
-    return resolveFallback(path, fallback);
+    console.info(`Usando dados de demonstração para ${path}:`, error.message);
+    const data = resolveFallback(path, fallback);
+    notifyFallback(path.split('?')[0], data);
+    return data;
   }
 }
 
@@ -191,4 +223,4 @@ export async function postJSON(path, payload) {
   return response.json();
 }
 
-export { API_BASE, API_FALLBACKS };
+export { API_BASE, API_FALLBACKS, FALLBACK_EVENT };

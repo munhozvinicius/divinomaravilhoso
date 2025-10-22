@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { fetchJSON, postJSON, API_FALLBACKS } from '../public/scripts/api.js';
+import { fetchJSON, postJSON, API_FALLBACKS, onFallback } from '../public/scripts/api.js';
 
 function restoreFetch(original) {
   if (original === undefined) {
@@ -34,6 +34,26 @@ async function testFallbackOnHttpError() {
     const result = await fetchJSON('/api/setlist/top');
     assert.equal(result[0].track_name, API_FALLBACKS['/api/setlist/top'][0].track_name);
   } finally {
+    restoreFetch(originalFetch);
+  }
+}
+
+async function testFallbackNotification() {
+  const originalFetch = global.fetch;
+  global.fetch = async () => {
+    throw new Error('network down');
+  };
+  let notified = 0;
+  const unsubscribe = onFallback(({ path, data }) => {
+    notified += 1;
+    assert.equal(path, '/api/events');
+    assert.ok(Array.isArray(data));
+  });
+  try {
+    await fetchJSON('/api/events');
+    assert.equal(notified, 1);
+  } finally {
+    unsubscribe();
     restoreFetch(originalFetch);
   }
 }
@@ -78,6 +98,7 @@ async function testPostJSONFailure() {
 async function run() {
   await testFallbackOnNetworkError();
   await testFallbackOnHttpError();
+  await testFallbackNotification();
   await testPostJSONSuccess();
   await testPostJSONFailure();
   console.log('Todos os testes do helper de API passaram.');
