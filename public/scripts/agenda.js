@@ -1,13 +1,4 @@
-async function fetchAgenda() {
-  try {
-    const response = await fetch('/api/events');
-    if (!response.ok) throw new Error('Falha ao carregar agenda');
-    return await response.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
+import { fetchJSON } from './api.js';
 
 function getDateParts(dateIso) {
   const date = new Date(`${dateIso}T00:00:00`);
@@ -81,7 +72,7 @@ function createScheduleItem(evento) {
 async function renderSchedule() {
   const container = document.getElementById('schedule-list');
   if (!container) return;
-  const eventos = await fetchAgenda();
+  const eventos = await fetchJSON('/api/events');
   container.innerHTML = '';
   if (eventos.length === 0) {
     container.innerHTML = '<p class="empty-state">Em breve novas datas neon.</p>';

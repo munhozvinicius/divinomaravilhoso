@@ -1,15 +1,4 @@
-const API_BASE = '';
-
-async function fetchJSON(path, fallback = []) {
-  try {
-    const response = await fetch(`${API_BASE}${path}`);
-    if (!response.ok) throw new Error('Resposta não OK');
-    return await response.json();
-  } catch (error) {
-    console.warn(`Falha ao carregar ${path}:`, error.message);
-    return fallback;
-  }
-}
+import { fetchJSON, postJSON } from './api.js';
 
 function getDateParts(dateIso) {
   const date = new Date(`${dateIso}T00:00:00`);
@@ -169,19 +158,6 @@ async function renderComments() {
     `;
     container.appendChild(item);
   });
-}
-
-async function postJSON(path, payload) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || 'Falha ao enviar');
-  }
-  return response.json();
 }
 
 async function populateTrackChoices() {
