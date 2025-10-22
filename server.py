@@ -252,7 +252,8 @@ def seed_data() -> None:
       )
 
       cur.execute('SELECT COUNT(*) AS total FROM products;')
-      if cur.fetchone()['total'] == 0:
+      product_count = cur.fetchone()
+      if product_count and product_count['total'] == 0:
         products = [
           (
             'Boné Divino Maravilhoso',
@@ -300,7 +301,8 @@ def seed_data() -> None:
         )
 
       cur.execute('SELECT COUNT(*) AS total FROM social_links;')
-      if cur.fetchone()['total'] == 0:
+      social_count = cur.fetchone()
+      if social_count and social_count['total'] == 0:
         links = [
           ('Instagram', 'https://www.instagram.com/divinomaravilhosobr', 'instagram'),
           ('YouTube', 'https://www.youtube.com/@divinomaravilhoso', 'youtube'),
@@ -683,7 +685,8 @@ class DivinoHandler(SimpleHTTPRequestHandler):
             json.dumps(validated_items)
           )
         )
-        order_id = cur.fetchone()['id']
+        result = cur.fetchone()
+        order_id = result['id'] if result else None
 
     self._set_json_headers(HTTPStatus.CREATED)
     self.wfile.write(json.dumps({'order_id': order_id, 'total': total_cents / 100}).encode('utf-8'))
