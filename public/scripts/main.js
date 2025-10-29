@@ -1,14 +1,16 @@
-const API_BASE = '';
+import { fetchJSON, postJSON, onFallback } from './api.js';
 
-async function fetchJSON(path, fallback = []) {
-  try {
-    const response = await fetch(`${API_BASE}${path}`);
-    if (!response.ok) throw new Error('Resposta não OK');
-    return await response.json();
-  } catch (error) {
-    console.warn(`Falha ao carregar ${path}:`, error.message);
-    return fallback;
-  }
+function setupOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  let isVisible = false;
+  const showBanner = () => {
+    if (isVisible) return;
+    isVisible = true;
+    banner.textContent = 'API fora do ar? Sem stress. Estamos exibindo dados de demonstração para você continuar navegando.';
+    banner.classList.remove('is-hidden');
+  };
+  onFallback(showBanner);
 }
 
 function getDateParts(dateIso) {
@@ -171,19 +173,6 @@ async function renderComments() {
   });
 }
 
-async function postJSON(path, payload) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || 'Falha ao enviar');
-  }
-  return response.json();
-}
-
 async function populateTrackChoices() {
   const datalist = document.getElementById('track-options');
   if (!datalist) return;
@@ -267,3 +256,4 @@ handleSetlistVote();
 handleCommentForm();
 handleNewsletter();
 populateTrackChoices();
+setupOfflineBanner();

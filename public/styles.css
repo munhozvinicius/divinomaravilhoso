@@ -38,6 +38,25 @@ body {
   padding: 0;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
+.offline-banner {
+  background: rgba(255, 47, 163, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  text-align: center;
+  padding: 12px clamp(16px, 6vw, 40px);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(12px);
+}
+
+.offline-banner::before {
+  content: '⚠️ ';
+}
+
 a {
   color: inherit;
   text-decoration: none;
