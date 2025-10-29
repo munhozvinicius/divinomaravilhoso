@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="nightSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c1b2e" />
+      <stop offset="50%" stop-color="#152f4f" />
+      <stop offset="100%" stop-color="#1f4f5c" />
+    </linearGradient>
+    <radialGradient id="moon" cx="0.18" cy="0.18" r="0.32">
+      <stop offset="0%" stop-color="#fff7d6" />
+      <stop offset="100%" stop-color="#f0c76d" />
+    </radialGradient>
+    <pattern id="check" width="110" height="110" patternUnits="userSpaceOnUse" patternTransform="skewX(-8)">
+      <rect width="110" height="110" fill="#111217" />
+      <path d="M0 0l110 110M110 0L0 110" stroke="#ffe9d0" stroke-width="12" />
+    </pattern>
+    <pattern id="bricks" width="90" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-4)">
+      <rect width="90" height="90" fill="#ef5a2a" />
+      <path d="M0 45h90M45 0v90" stroke="#ffe8cf" stroke-width="8" />
+    </pattern>
+    <linearGradient id="shadow3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00000055" />
+      <stop offset="100%" stop-color="#00000000" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#nightSky)" />
+  <circle cx="280" cy="220" r="140" fill="url(#moon)" />
+  <g fill="#ffe8cf" opacity="0.4">
+    <circle cx="580" cy="150" r="12" />
+    <circle cx="740" cy="110" r="9" />
+    <circle cx="860" cy="220" r="7" />
+    <circle cx="1080" cy="140" r="11" />
+    <circle cx="1340" cy="200" r="8" />
+  </g>
+  <g opacity="0.9">
+    <path d="M0 560h1600v340H0z" fill="url(#check)" />
+  </g>
+  <g opacity="0.8">
+    <path d="M1040 340l160-160 200 160-180 200z" fill="url(#bricks)" />
+    <path d="M820 360l140-180 200 180-160 200z" fill="#1c6f4a" />
+    <path d="M540 380l120-160 180 160-120 180z" fill="#f6a950" />
+  </g>
+  <g opacity="0.85">
+    <path d="M220 360l60-140 160 140-140 160z" fill="#ef5a2a" />
+    <path d="M160 480h220l-40 140H120z" fill="#f6c764" />
+  </g>
+  <g fill="#ffe9d0" opacity="0.85">
+    <rect x="1180" y="500" width="90" height="200" rx="30" />
+    <rect x="1280" y="560" width="28" height="140" />
+    <rect x="1142" y="560" width="28" height="140" />
+  </g>
+  <rect width="1600" height="900" fill="url(#shadow3)" />
+</svg>
