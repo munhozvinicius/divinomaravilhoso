@@ -17,10 +17,11 @@ from psycopg_pool import ConnectionPool
 
 BASE_DIR = Path(__file__).resolve().parent
 PUBLIC_DIR = BASE_DIR / 'public'
-DATABASE_URL = os.getenv(
-  'DATABASE_URL',
-  'postgresql://neondb_owner:npg_EunfT2mh0Sci@ep-calm-sky-aczofamt-pooler.sa-east-1.aws.neon.tech/Divino%20?sslmode=require&channel_binding=require'
-)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+  raise RuntimeError(
+    'DATABASE_URL environment variable must be set with the Neon connection string.'
+  )
 
 DB_POOL = ConnectionPool(
   conninfo=DATABASE_URL,

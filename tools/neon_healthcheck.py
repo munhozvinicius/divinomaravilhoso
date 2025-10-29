@@ -9,7 +9,7 @@ Run with:
 
     python3 tools/neon_healthcheck.py
 
-Set ``DATABASE_URL`` to override the default Neon connection string.
+Set ``DATABASE_URL`` with the Neon connection string for your project.
 """
 from __future__ import annotations
 
@@ -27,10 +27,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - surfaced to CLI
     )
     raise
 
-DEFAULT_URL = (
-    "postgresql://neondb_owner:npg_EunfT2mh0Sci@ep-calm-sky-aczofamt-pooler.sa-east-1.aws.neon.tech/Divino%20"
-    "?sslmode=require&channel_binding=require"
-)
+DEFAULT_URL = "postgresql://<username>:<password>@<host>/<database>?sslmode=require"
 
 EXPECTED_TABLES = {
     "events",
@@ -96,7 +93,14 @@ def ping_database(url: str) -> None:
 
 
 if __name__ == "__main__":
-    db_url = os.getenv("DATABASE_URL", DEFAULT_URL)
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        sys.stderr.write(
+            "[neon-healthcheck] ❌ A variável de ambiente DATABASE_URL deve ser definida com as "
+            "credenciais do Neon (ex.: "
+            f"{DEFAULT_URL}).\n"
+        )
+        sys.exit(64)
     try:
         ping_database(db_url)
     except HealthcheckFailure as failure:
